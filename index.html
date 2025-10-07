@@ -5,236 +5,203 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Indicadores A&S - Pierre Fabre 2025</title>
 
-  <!-- Tipografia -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
 
   <!-- Libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root{
-      --bg: #f6f7f9;
-      --card: #ffffff;
-      --muted: #6b7280;          /* cinza médio */
-      --line: #e5e7eb;           /* borda suave */
+      /* Paleta neutra + acentos */
+      --bg: #f7f7fb;
+      --surface: #ffffff;
+      --surface-2: #f1f1f6;
+      --text: #1f2937;        /* slate-800 */
+      --muted: #6b7280;       /* slate-500 */
+      --border: #e5e7eb;      /* gray-200 */
 
-      --brand: #7c3aed;          /* violeta */
-      --brand-600: #6d28d9;
-      --brand-100: #ede9fe;
+      --accent: #6d28d9;      /* violet-700 */
+      --accent-600: #7c3aed;  /* violet-600 */
+      --accent-500: #8b5cf6;  /* violet-500 */
+      --accent-300: #c4b5fd;  /* violet-300 */
+      --accent-100: #ede9fe;  /* violet-100 */
 
-      --accent: #06b6d4;         /* ciano */
-      --accent-100: #ecfeff;
+      --good: #16a34a;        /* green-600 */
+      --warn: #f59e0b;        /* amber-500 */
+      --bad:  #ef4444;        /* red-500 */
 
-      --success: #16a34a;
-      --warning: #f59e0b;
-      --error:   #ef4444;
-
-      --shadow: 0 6px 24px rgba(2,6,23,0.06);
-      --radius-xl: 16px;
-      --radius-lg: 12px;
-      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --shadow-1: 0 6px 20px rgba(0,0,0,.06);
+      --shadow-2: 0 10px 30px rgba(0,0,0,.08);
     }
 
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{height:100%}
+    /* Dark mode automático */
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg: #0b0d12;
+        --surface: #111418;
+        --surface-2: #151a20;
+        --text: #e5e7eb;
+        --muted: #a1a1aa;
+        --border: #1f242b;
+
+        --shadow-1: 0 6px 22px rgba(0,0,0,.35);
+        --shadow-2: 0 18px 40px rgba(0,0,0,.45);
+      }
+    }
+
+    *{ box-sizing: border-box; margin:0; padding:0; }
+    html,body{ height:100%; }
     body{
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color:#0f172a;
-      line-height:1.4;
-      padding:24px;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1000px 600px at 10% -10%, var(--accent-100), transparent 60%),
+                  radial-gradient(800px 500px at 110% 10%, var(--accent-100), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      padding: 24px;
     }
 
-    /* Botão imprimir */
     .print-button{
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--brand);
-      color:#fff;
-      border:none;
+      position: fixed; top: 18px; right: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
       padding: 10px 18px;
       border-radius: 999px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor:pointer;
-      box-shadow: var(--shadow);
-      transition: transform .15s ease, filter .15s ease;
+      font-weight: 600; font-size: 14px;
+      cursor: pointer;
+      box-shadow: var(--shadow-1);
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
       z-index: 1000;
     }
-    .print-button:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .print-button:hover{ transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--accent-300);}
+    @media print{ .print-button{ display:none } body{ background: #fff } }
 
-    /* Header */
     .header{
-      max-width: 1200px;
-      margin: 60px auto 28px;
-      background: linear-gradient(180deg, var(--card), #fafbff);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow);
-      padding: 32px 28px;
+      max-width: 1200px; margin: 0 auto 28px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius-lg) + 4px);
+      box-shadow: var(--shadow-1);
+      padding: 28px 28px 24px;
+      text-align: left;
     }
-    .brand-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom: 8px;
+    .brand{
+      display:flex; align-items:center; gap:14px; margin-bottom:12px;
     }
     .logo{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      background: linear-gradient(90deg, var(--brand-100), var(--accent-100));
-      border: 1px solid var(--line);
-      color: var(--brand-600);
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-weight: 800;
-      letter-spacing: 0.3px;
+      width: 44px; height: 44px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-600), var(--accent));
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.15);
     }
-    .logo .dot{
-      width:10px;height:10px;border-radius:50%;background: var(--brand);
-      box-shadow: 0 0 0 3px #ede9fe inset;
+    .brand h1{
+      font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .title{
+      display:flex; flex-wrap:wrap; align-items:baseline; gap:10px;
+    }
+    .title h2{ font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
+    .title .pill{
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      background: var(--accent-100); border: 1px solid var(--border);
+      padding: 6px 10px; border-radius: 999px;
+    }
+    .subhead{
+      margin-top:6px; color: var(--muted); font-size: 14px;
     }
 
-    .header h1{
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing:-0.02em;
-      color:#0b1324;
-      margin:6px 0 2px;
-    }
-    .header h2{
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--brand-600);
-      letter-spacing: .2px;
-      margin-bottom: 6px;
-    }
-    .header p{ color: var(--muted); font-size: 14px; }
-
-    /* Container */
-    .dashboard-container{
-      max-width: 1200px;
-      margin: 0 auto 60px;
-    }
+    .dashboard-container{ max-width: 1200px; margin: 0 auto; }
 
     .section-title{
-      margin: 26px 0 14px;
-      font-size: 18px;
-      font-weight: 700;
-      color:#0b1324;
-      display:flex;
-      align-items:center;
-      gap:10px;
+      margin: 28px 0 14px;
+      font-size: 18px; font-weight: 700; letter-spacing: .02em;
+      display:flex; align-items:center; gap:10px;
+      color: var(--text);
     }
-    .section-title::after{
-      content:"";
-      flex:1;
-      height:1px;
-      background: var(--line);
-      opacity:.8;
+    .section-title::before{
+      content:'';
+      display:inline-block; width:10px; height:10px; border-radius:3px;
+      background: linear-gradient(135deg, var(--accent-600), var(--accent-300));
+      box-shadow: 0 0 0 4px var(--accent-100);
     }
 
     .metrics-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
-      gap: 18px;
-      margin-bottom: 22px;
+      display:grid; gap:18px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      margin-bottom: 18px;
     }
+
     .metric-card{
-      background: var(--card);
-      border: 1px solid var(--line);
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-1);
       padding: 18px;
-      transition: transform .15s ease, box-shadow .15s ease;
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
     }
-    .metric-card:hover{ transform: translateY(-2px); box-shadow: 0 8px 28px rgba(2,6,23,0.08); }
+    .metric-card:hover{ transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--accent-100); }
     .metric-card h3{
-      font-size: 14px;
-      color:#111827;
-      font-weight: 700;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px dashed var(--line);
+      font-size: 14px; font-weight: 700; letter-spacing:.02em;
+      color: var(--muted);
+      margin-bottom: 12px;
     }
 
-    .chart-container{ position: relative; height: 300px; width:100%; }
+    .chart-container{ position: relative; width: 100%; height: 300px; }
 
-    /* Cards de stats (Resumo Executivo) */
     .stat-grid{
-      display:grid;
+      display:grid; gap:14px;
       grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-      gap:14px;
     }
-    .stat-box{
-      background: linear-gradient(135deg, var(--brand), var(--accent));
-      color:#fff;
-      padding:18px;
+    .stat{
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      position:relative;
-      overflow:hidden;
-      isolation:isolate;
+      padding:16px;
+      text-align:left;
     }
-    .stat-box::after{
-      content:"";
-      position:absolute; inset:auto -30px -30px auto;
-      width:120px; height:120px; border-radius:50%;
-      background: rgba(255,255,255,.15); filter: blur(10px);
-      z-index:-1;
-    }
-    .stat-number{ font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
-    .stat-label{ font-size: 12px; opacity: .95; margin-top:4px; font-weight:600; letter-spacing:.3px; }
+    .stat .label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.06em; text-transform: uppercase;}
+    .stat .value{ margin-top:6px; font-size:30px; font-weight:800; letter-spacing: -0.02em; }
 
-    /* Diversidade */
-    .diversity-indicators{
-      display:flex; flex-wrap:wrap; gap:16px; padding: 6px 2px; justify-content:space-between;
-    }
-    .diversity-item{ text-align:center; flex:1; min-width:140px; }
-    .diversity-icon{
-      width:60px; height:60px; margin: 0 auto 8px; border-radius: 14px;
-      display:grid; place-items:center; color:#fff; font-size:24px;
-      background: linear-gradient(135deg, var(--brand), var(--accent));
-      box-shadow: var(--shadow);
-    }
-    .diversity-value{ font-size: 26px; font-weight: 800; color:#0b1324; margin: 8px 0 2px; }
-    .diversity-label{ font-size: 12px; color: var(--muted); letter-spacing:.3px; }
-
-    /* Tabela */
-    .table-container{ overflow-x:auto; margin-top: 10px; }
-    table{ width:100%; border-collapse: collapse; }
-    th, td{ padding:12px; text-align:left; border-bottom:1px solid var(--line); }
+    .table-container{ overflow-x:auto; margin-top:8px; }
+    table{ width:100%; border-collapse: collapse; font-size: 14px; }
+    th,td{ padding:12px 10px; border-bottom:1px solid var(--border); }
     th{
-      background: linear-gradient(180deg, #fafbff, #f4f6fb);
-      color:#111827;
-      font-weight: 700;
-      font-size: 13px;
+      text-align:left; font-weight:700; color:var(--text);
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      position: sticky; top:0; z-index:1;
     }
-    td{ font-size: 13px; color:#111827; }
+    tr:hover td{ background: rgba(139,92,246,.06); }
 
-    tr:hover{ background:#f9fafb; }
+    .diversity-indicators{
+      display:flex; flex-wrap:wrap; gap:16px; padding:4px;
+    }
+    .diversity-item{
+      flex:1; min-width: 160px;
+      display:flex; align-items:center; gap:12px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border:1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding:12px 14px;
+    }
+    .diversity-badge{
+      width:42px; height:42px; border-radius:10px;
+      background: linear-gradient(135deg, var(--accent-600), var(--accent));
+      display:grid; place-items:center; color:#fff; font-size:18px; font-weight:700;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.14);
+    }
+    .diversity-text .val{ font-weight:800; font-size:22px; letter-spacing:-.02em; }
+    .diversity-text .lbl{ color:var(--muted); font-size:12px; text-transform: uppercase; letter-spacing:.06em; }
+    .diversity-text .note{ margin-top:2px; font-size:12px; color:var(--accent-600); font-weight:600; }
 
-    /* Legenda (se usar) */
-    .legend{ display:flex; justify-content:center; flex-wrap:wrap; gap:14px; margin-top:10px; }
-    .legend-item{ display:flex; align-items:center; gap:8px; font-size:13px; color:#111827; }
-    .legend-color{ width:16px; height:16px; border-radius:4px; outline:1px solid #0001; }
-
-    /* Print */
     @media print{
-      body{ background:#fff; padding:0; }
-      .print-button{ display:none; }
-      .header{
-        box-shadow:none; border:none; background:#fff;
-        margin: 0 0 18px; border-bottom: 1px solid var(--line); border-radius: 0;
-      }
-      .header h1{ color:#0b1324; }
-      .section-title{ color:#0b1324; }
-      .metric-card{ break-inside: avoid; box-shadow:none; }
+      body{ padding:0; background:#fff; }
+      .header{ box-shadow:none; }
+      .metric-card{ break-inside: avoid; }
     }
   </style>
 </head>
@@ -242,60 +209,45 @@
   <button class="print-button" onclick="window.print()">📄 Exportar PDF</button>
 
   <header class="header">
-    <div class="brand-row">
-      <div class="logo">
-        <span class="dot"></span>
-        <span>Pierre&nbsp;Fabre</span>
-      </div>
-      <p style="font-size:13px;color:var(--muted)">Atualizado em: Outubro 2025</p>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <h1>PIERRE FABRE</h1>
     </div>
-    <h1>Indicadores A&amp;S</h1>
-    <h2>Processos Seletivos — 2025</h2>
+    <div class="title">
+      <h2>Indicadores A&amp;S</h2>
+      <span class="pill">Processos Seletivos · 2025</span>
+    </div>
+    <p class="subhead">Atualizado em: Outubro 2025</p>
   </header>
 
   <main class="dashboard-container">
     <!-- Resumo Executivo -->
     <section>
-      <h2 class="section-title">📊 Resumo Executivo</h2>
+      <h3 class="section-title">📊 Resumo Executivo</h3>
       <div class="stat-grid">
-        <div class="stat-box">
-          <div class="stat-number">128</div>
-          <div class="stat-label">Total de Vagas</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number">93</div>
-          <div class="stat-label">Contratações</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number">72.7%</div>
-          <div class="stat-label">Taxa de Conversão</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number">16</div>
-          <div class="stat-label">Em Andamento</div>
-        </div>
+        <div class="stat"><div class="label">Total de Vagas</div><div class="value">128</div></div>
+        <div class="stat"><div class="label">Contratações</div><div class="value">93</div></div>
+        <div class="stat"><div class="label">Taxa de Conversão</div><div class="value">72,7%</div></div>
+        <div class="stat"><div class="label">Em Andamento</div><div class="value">16</div></div>
       </div>
     </section>
 
     <!-- Volumetria dos Processos -->
     <section>
-      <h2 class="section-title">📈 Volumetria dos Processos</h2>
+      <h3 class="section-title">📈 Volumetria dos Processos</h3>
       <div class="metrics-grid">
         <div class="metric-card">
           <h3>Status das Requisições</h3>
           <div class="chart-container"><canvas id="statusReqChart"></canvas></div>
         </div>
-
         <div class="metric-card">
           <h3>Status dos Processos</h3>
           <div class="chart-container"><canvas id="statusProcChart"></canvas></div>
         </div>
-
         <div class="metric-card">
           <h3>Vagas por Local</h3>
           <div class="chart-container"><canvas id="localChart"></canvas></div>
         </div>
-
         <div class="metric-card">
           <h3>Perfil das Vagas</h3>
           <div class="chart-container"><canvas id="nivelChart"></canvas></div>
@@ -303,48 +255,56 @@
       </div>
     </section>
 
-    <!-- Distribuição por Área -->
+    <!-- Distribuição por Diretoria -->
     <section>
-      <h2 class="section-title">🏢 Distribuição por Diretoria</h2>
+      <h3 class="section-title">🏢 Distribuição por Diretoria</h3>
       <div class="metric-card">
         <h3>Top 10 Diretorias com Mais Vagas</h3>
-        <div class="chart-container" style="height:400px"><canvas id="diretoriaChart"></canvas></div>
+        <div class="chart-container" style="height: 400px;"><canvas id="diretoriaChart"></canvas></div>
       </div>
     </section>
 
     <!-- Diversidade e Inclusão -->
     <section>
-      <h2 class="section-title">🌈 Diversidade e Inclusão</h2>
+      <h3 class="section-title">🌈 Diversidade e Inclusão</h3>
       <div class="metric-card">
         <h3>Indicadores de Diversidade nas Contratações</h3>
         <div class="diversity-indicators">
           <div class="diversity-item">
-            <div class="diversity-icon">👩</div>
-            <div class="diversity-value">13</div>
-            <div class="diversity-label">MULHERES</div>
-            <div style="color: var(--brand); font-size: 12px;">14% do total</div>
+            <div class="diversity-badge">♀</div>
+            <div class="diversity-text">
+              <div class="val">13</div>
+              <div class="lbl">Mulheres</div>
+              <div class="note">14% do total</div>
+            </div>
           </div>
           <div class="diversity-item">
-            <div class="diversity-icon">🤝</div>
-            <div class="diversity-value">17</div>
-            <div class="diversity-label">RAÇA</div>
-            <div style="color: var(--brand); font-size: 12px;">18.3% do total</div>
+            <div class="diversity-badge">🤝</div>
+            <div class="diversity-text">
+              <div class="val">17</div>
+              <div class="lbl">Raça</div>
+              <div class="note">18,3% do total</div>
+            </div>
           </div>
           <div class="diversity-item">
-            <div class="diversity-icon">♿</div>
-            <div class="diversity-value">0</div>
-            <div class="diversity-label">PCD</div>
-            <div style="color: var(--error); font-size: 12px;">0% do total</div>
+            <div class="diversity-badge">♿</div>
+            <div class="diversity-text">
+              <div class="val">0</div>
+              <div class="lbl">PCD</div>
+              <div class="note" style="color:var(--bad)">0% do total</div>
+            </div>
           </div>
           <div class="diversity-item">
-            <div class="diversity-icon">👴</div>
-            <div class="diversity-value">5</div>
-            <div class="diversity-label">50+</div>
-            <div style="color: var(--brand); font-size: 12px;">5.4% do total</div>
+            <div class="diversity-badge">50+</div>
+            <div class="diversity-text">
+              <div class="val">5</div>
+              <div class="lbl">Faixa Etária</div>
+              <div class="note">5,4% do total</div>
+            </div>
           </div>
         </div>
 
-        <div class="chart-container" style="height:300px;margin-top:24px">
+        <div class="chart-container" style="height: 320px; margin-top: 18px;">
           <canvas id="diversityChart"></canvas>
         </div>
       </div>
@@ -352,136 +312,125 @@
 
     <!-- Análise Detalhada -->
     <section>
-      <h2 class="section-title">📋 Análise Detalhada</h2>
+      <h3 class="section-title">📋 Análise Detalhada</h3>
       <div class="metrics-grid">
         <div class="metric-card">
           <h3>Taxa de Aprovação por Status</h3>
           <div class="table-container">
             <table>
               <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Quantidade</th>
-                  <th>Percentual</th>
-                </tr>
+                <tr><th>Status</th><th>Quantidade</th><th>Percentual</th></tr>
               </thead>
               <tbody>
-                <tr><td>Contratada</td><td>93</td><td>72.7%</td></tr>
-                <tr><td>Congelada</td><td>16</td><td>12.5%</td></tr>
-                <tr><td>Cancelada</td><td>16</td><td>12.5%</td></tr>
-                <tr><td>Declínio de Oferta</td><td>2</td><td>1.6%</td></tr>
-                <tr><td>Em Processo</td><td>1</td><td>0.8%</td></tr>
+                <tr><td>Contratada</td><td>93</td><td>72,7%</td></tr>
+                <tr><td>Congelada</td><td>16</td><td>12,5%</td></tr>
+                <tr><td>Cancelada</td><td>16</td><td>12,5%</td></tr>
+                <tr><td>Declínio de Oferta</td><td>2</td><td>1,6%</td></tr>
+                <tr><td>Em Processo</td><td>1</td><td>0,8%</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-
         <div class="metric-card">
           <h3>Principais Métricas de Performance</h3>
           <div class="table-container">
             <table>
               <thead>
-                <tr>
-                  <th>Métrica</th>
-                  <th>Valor</th>
-                  <th>Meta</th>
-                  <th>Status</th>
-                </tr>
+                <tr><th>Métrica</th><th>Valor</th><th>Meta</th><th>Status</th></tr>
               </thead>
               <tbody>
-                <tr><td>Taxa de Conversão</td><td>72.7%</td><td>70%</td><td style="color: var(--success); font-weight:700">✓ Atingido</td></tr>
-                <tr><td>Diversidade Gênero</td><td>14%</td><td>30%</td><td style="color: var(--warning); font-weight:700">⚠ Em progresso</td></tr>
-                <tr><td>Inclusão PCD</td><td>0%</td><td>5%</td><td style="color: var(--error); font-weight:700">✗ Abaixo da meta</td></tr>
-                <tr><td>Taxa de Cancelamento</td><td>12.5%</td><td>15%</td><td style="color: var(--success); font-weight:700">✓ Dentro do esperado</td></tr>
+                <tr><td>Taxa de Conversão</td><td>72,7%</td><td>70%</td><td style="color:var(--good);font-weight:700">✓ Atingido</td></tr>
+                <tr><td>Diversidade Gênero</td><td>14%</td><td>30%</td><td style="color:var(--warn);font-weight:700">⚠ Em progresso</td></tr>
+                <tr><td>Inclusão PCD</td><td>0%</td><td>5%</td><td style="color:var(--bad);font-weight:700">✗ Abaixo da meta</td></tr>
+                <tr><td>Taxa de Cancelamento</td><td>12,5%</td><td>15%</td><td style="color:var(--good);font-weight:700">✓ Dentro do esperado</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
     </section>
   </main>
 
   <script>
-    // ====== CONFIG GERAL CHART.JS ======
-    Chart.defaults.font.family = "'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-    Chart.defaults.plugins.legend.labels.boxWidth = 14;
+    // Tipografia global dos gráficos
+    Chart.defaults.font.family = "'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
 
-    // ====== DADOS (mantidos) ======
+    // Paleta coerente com o CSS
+    const palette = {
+      violet700: "#6d28d9",
+      violet600: "#7c3aed",
+      violet500: "#8b5cf6",
+      violet300: "#c4b5fd",
+      gray600:   "#4b5563",
+      gray300:   "#d1d5db",
+      green600:  "#16a34a",
+      amber500:  "#f59e0b",
+      red500:    "#ef4444",
+      slate800:  "#1f2937"
+    };
+
+    // Dados (mesmos do original)
     const data = {
       statusRequisicao: { Aprovada: 56, Cancelada: 4, Preenchida: 68 },
-      statusProcesso: {
-        Contratada: 93, Congelada: 16, Cancelada: 16,
-        'Declínio de carta oferta': 2, 'Em Processo': 1
-      },
+      statusProcesso: { Contratada: 93, Congelada: 16, Cancelada: 16, 'Declínio de carta oferta': 2, 'Em Processo': 1 },
       local: { Escritório: 72, Campo: 29, BIC: 13, Fábrica: 12, 'Não especificado': 2 },
-      nivel: {
-        Estágio: 41, Analista: 27, Vendas: 19, Gerencial: 12, Especialista: 10,
-        'Jovem Aprendiz': 10, 'Supervisão/Coordenação': 6, 'Demais vagas': 1, 'Não especificado': 2
-      },
-      diretoria: {
-        'Desenvolvimento Comercial': 26, Marketing: 20, BIC: 15, Vendas: 10,
-        Financeiro: 9, Industrial: 9, Logística: 8, RH: 7, Comercial: 5, Fábrica: 3, 'Supply Chain': 3, Outros: 13
-      },
+      nivel: { Estágio: 41, Analista: 27, Vendas: 19, Gerencial: 12, Especialista: 10, 'Jovem Aprendiz': 10, 'Supervisão/Coordenação': 6, 'Demais vagas': 1, 'Não especificado': 2 },
+      diretoria: { 'Desenvolvimento Comercial': 26, Marketing: 20, BIC: 15, Vendas: 10, Financeiro: 9, Industrial: 9, Logística: 8, RH: 7, Comercial: 5, Fábrica: 3, 'Supply Chain': 3, Outros: 13 },
       diversidade: { Mulheres: 13, 'Negros/Pardos': 17, PCD: 0, '50+': 5 }
     };
 
-    // ====== PALETA NOVA ======
-    const colors = {
-      primary: ['#7c3aed','#06b6d4','#0ea5e9','#22c55e','#eab308','#ef4444'], // violeta, ciano, azul, verde, amarelo, vermelho
-      primarySoft: ['#ede9fe','#ecfeff','#e0f2fe','#dcfce7','#fef9c3','#fee2e2'],
-      success: '#16a34a',
-      warning: '#f59e0b',
-      error:   '#ef4444'
-    };
+    // Helpers visuais
+    const ringColors = [palette.violet700, palette.violet600, palette.violet500, palette.violet300, palette.gray300, palette.gray600];
+    const altColors  = [palette.violet600, palette.violet500, palette.violet300, palette.gray600, palette.gray300, palette.violet700];
 
-    // ====== GRAF: Status das Requisições (doughnut) ======
+    // Doughnut – Status das Requisições
     new Chart(document.getElementById('statusReqChart'), {
       type: 'doughnut',
       data: {
         labels: Object.keys(data.statusRequisicao),
         datasets: [{
           data: Object.values(data.statusRequisicao),
-          backgroundColor: colors.primary,
+          backgroundColor: ringColors,
+          borderColor: "#fff",
           borderWidth: 2,
-          borderColor: '#fff'
+          hoverOffset: 6
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '55%',
+        cutout: '62%',
         plugins: {
-          legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } }
+          legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 }} },
+          tooltip: { callbacks:{ label: c => `${c.label}: ${c.parsed}` } }
         }
       }
     });
 
-    // ====== GRAF: Status dos Processos (pie) ======
+    // Pie – Status dos Processos
     new Chart(document.getElementById('statusProcChart'), {
       type: 'pie',
       data: {
         labels: Object.keys(data.statusProcesso),
         datasets: [{
           data: Object.values(data.statusProcesso),
-          backgroundColor: [
-            '#7c3aed','#06b6d4','#0ea5e9','#22c55e','#eab308','#ef4444',
-            '#8b5cf6','#14b8a6','#38bdf8','#34d399','#fbbf24','#f87171'
-          ],
-          borderWidth: 2,
-          borderColor: '#fff'
+          backgroundColor: altColors,
+          borderColor: "#fff",
+          borderWidth: 2
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } }
+          legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } }
         }
       }
     });
 
-    // ====== GRAF: Vagas por Local (bar) ======
+    // Bar – Vagas por Local
     new Chart(document.getElementById('localChart'), {
       type: 'bar',
       data: {
@@ -489,45 +438,50 @@
         datasets: [{
           label: 'Quantidade de Vagas',
           data: Object.values(data.local),
-          backgroundColor: '#06b6d4',
-          borderColor: '#0891b2',
-          borderWidth: 2
+          backgroundColor: palette.violet600,
+          borderRadius: 8
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 10 }, grid: { color: '#eef0f4' } },
-          x: { grid: { display:false } }
+          x: { grid: { display:false } },
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 10 },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          }
         },
         plugins: { legend: { display:false } }
       }
     });
 
-    // ====== GRAF: Perfil das Vagas (polarArea) ======
+    // Polar Area – Perfil das Vagas
     new Chart(document.getElementById('nivelChart'), {
       type: 'polarArea',
       data: {
         labels: Object.keys(data.nivel),
         datasets: [{
           data: Object.values(data.nivel),
-          backgroundColor: ['#ede9fe','#ecfeff','#e0f2fe','#dcfce7','#fef9c3','#fee2e2',
-                            '#f3e8ff','#cffafe','#bae6fd','#bbf7d0','#fde68a','#fecaca'],
-          borderColor:   ['#7c3aed','#06b6d4','#0ea5e9','#22c55e','#eab308','#ef4444',
-                          '#8b5cf6','#14b8a6','#38bdf8','#34d399','#fbbf24','#f87171'],
+          backgroundColor: [
+            palette.violet700 + 'dd', palette.violet600 + 'dd', palette.violet500 + 'dd',
+            palette.violet300 + 'dd', palette.gray600 + 'dd',   palette.gray300 + 'dd',
+            '#9ca3afdd', '#cbd5e1dd', '#818cf8dd'
+          ],
+          borderColor: 'rgba(255,255,255,.9)',
           borderWidth: 2
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } },
-        scales: { r: { grid: { color:'#eef0f4' } } }
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{ legend:{ position:'right', labels:{ font:{ size:11 } } } },
+        scales:{ r:{ grid:{ color:'rgba(0,0,0,.06)' } } }
       }
     });
 
-    // ====== GRAF: Diretorias (horizontal bar) ======
+    // Horizontal Bar – Diretorias
     new Chart(document.getElementById('diretoriaChart'), {
       type: 'bar',
       data: {
@@ -535,54 +489,40 @@
         datasets: [{
           label: 'Número de Vagas',
           data: Object.values(data.diretoria),
-          backgroundColor: [
-            '#7c3aed','#06b6d4','#0ea5e9','#22c55e','#eab308','#ef4444',
-            '#8b5cf6','#14b8a6','#38bdf8','#34d399','#fbbf24','#f87171'
-          ],
-          borderWidth: 0
+          backgroundColor: Object.values(data.diretoria).map((_,i)=> i%2? palette.violet600: palette.violet500),
+          borderRadius: 8
         }]
       },
       options: {
         indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { beginAtZero:true, ticks:{ stepSize:5 }, grid:{ color:'#eef0f4' } },
-          y: { grid:{ display:false } }
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          y:{ grid:{ display:false } },
+          x:{ beginAtZero:true, ticks:{ stepSize:5 }, grid:{ color:'rgba(0,0,0,.06)' } }
         },
-        plugins: { legend: { display:false } }
+        plugins:{ legend:{ display:false } }
       }
     });
 
-    // ====== GRAF: Diversidade (comparativo metas) ======
+    // Grupo – Diversidade
     new Chart(document.getElementById('diversityChart'), {
       type: 'bar',
       data: {
-        labels: ['Mulheres', 'Raça', 'PCD', '50+'],
+        labels: ['Mulheres','Raça','PCD','50+'],
         datasets: [
-          {
-            label: 'Contratações',
-            data: [13, 17, 0, 5],
-            backgroundColor: ['#7c3aed','#06b6d4','#ef4444','#eab308'],
-            borderWidth: 0
-          },
-          {
-            label: 'Meta',
-            data: [30, 20, 5, 10],
-            backgroundColor: '#e5e7eb',
-            borderColor: '#cbd5e1',
-            borderWidth: 2
-          }
+          { label:'Contratações', data:[13,17,0,5], backgroundColor: [palette.violet600, palette.violet500, palette.red500, palette.amber500], borderRadius: 8 },
+          { label:'Meta', data:[30,20,5,10], backgroundColor: 'rgba(15,23,42,.12)', borderRadius: 8 }
         ]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero:true, max:35, ticks:{ stepSize:5 }, grid:{ color:'#eef0f4' } },
-          x: { grid:{ display:false } }
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          y:{ beginAtZero:true, max:35, ticks:{ stepSize:5 }, grid:{ color:'rgba(0,0,0,.06)' } },
+          x:{ grid:{ display:false } }
         },
-        plugins: { legend: { position: 'bottom' } }
+        plugins:{ legend:{ position:'bottom' } }
       }
     });
   </script>
