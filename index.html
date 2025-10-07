@@ -1,213 +1,100 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Indicadores A&S - Pierre Fabre 2025</title>
 
-  <!-- Fonts -->
+  <!-- Fonte e libs -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-
-  <!-- Libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root{
-      /* Paleta neutra + acentos */
-      --bg: #f7f7fb;
-      --surface: #ffffff;
-      --surface-2: #f1f1f6;
-      --text: #1f2937;        /* slate-800 */
-      --muted: #6b7280;       /* slate-500 */
-      --border: #e5e7eb;      /* gray-200 */
-
-      --accent: #6d28d9;      /* violet-700 */
-      --accent-600: #7c3aed;  /* violet-600 */
-      --accent-500: #8b5cf6;  /* violet-500 */
-      --accent-300: #c4b5fd;  /* violet-300 */
-      --accent-100: #ede9fe;  /* violet-100 */
-
-      --good: #16a34a;        /* green-600 */
-      --warn: #f59e0b;        /* amber-500 */
-      --bad:  #ef4444;        /* red-500 */
-
-      --radius-lg: 16px;
-      --radius-md: 12px;
-      --shadow-1: 0 6px 20px rgba(0,0,0,.06);
-      --shadow-2: 0 10px 30px rgba(0,0,0,.08);
+      --bg:#0b0d12; --surface:#111418; --surface-2:#151a20;
+      --text:#e5e7eb; --muted:#a1a1aa; --border:#1f242b;
+      --accent:#7c3aed; --accent-500:#8b5cf6; --accent-300:#c4b5fd; --accent-100:#ede9fe;
+      --good:#16a34a; --warn:#f59e0b; --bad:#ef4444;
+      --radius-lg:16px; --radius-md:12px;
+      --shadow-1:0 6px 22px rgba(0,0,0,.35); --shadow-2:0 18px 40px rgba(0,0,0,.45);
     }
-
-    /* Dark mode automático */
-    @media (prefers-color-scheme: dark){
-      :root{
-        --bg: #0b0d12;
-        --surface: #111418;
-        --surface-2: #151a20;
-        --text: #e5e7eb;
-        --muted: #a1a1aa;
-        --border: #1f242b;
-
-        --shadow-1: 0 6px 22px rgba(0,0,0,.35);
-        --shadow-2: 0 18px 40px rgba(0,0,0,.45);
-      }
-    }
-
-    *{ box-sizing: border-box; margin:0; padding:0; }
-    html,body{ height:100%; }
+    *{box-sizing:border-box;margin:0;padding:0}
     body{
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1000px 600px at 10% -10%, var(--accent-100), transparent 60%),
-                  radial-gradient(800px 500px at 110% 10%, var(--accent-100), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      padding: 24px;
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:
+        radial-gradient(1000px 600px at 10% -10%, rgba(139,92,246,.12), transparent 60%),
+        radial-gradient(800px 500px at 110% 10%, rgba(139,92,246,.12), transparent 55%),
+        var(--bg);
+      color:var(--text); padding:24px;
     }
-
-    .print-button{
-      position: fixed; top: 18px; right: 18px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-weight: 600; font-size: 14px;
-      cursor: pointer;
-      box-shadow: var(--shadow-1);
-      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
-      z-index: 1000;
+    .print-button,.load-button{
+      background:var(--surface); border:1px solid var(--border); color:var(--text);
+      padding:10px 16px; border-radius:999px; font-weight:600; font-size:14px; cursor:pointer;
+      box-shadow:var(--shadow-1); transition:.2s; display:inline-flex; align-items:center; gap:8px;
     }
-    .print-button:hover{ transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--accent-300);}
-    @media print{ .print-button{ display:none } body{ background: #fff } }
+    .print-button:hover,.load-button:hover{ transform:translateY(-2px); box-shadow:var(--shadow-2); border-color:var(--accent-300)}
+    .toolbar{ display:flex; gap:12px; position:fixed; top:18px; right:18px; z-index:1000; }
+    .toolbar input{ display:none }
+    @media print{ .toolbar{display:none} body{background:#fff} }
 
     .header{
-      max-width: 1200px; margin: 0 auto 28px;
-      background: linear-gradient(180deg, var(--surface), var(--surface-2));
-      border: 1px solid var(--border);
-      border-radius: calc(var(--radius-lg) + 4px);
-      box-shadow: var(--shadow-1);
-      padding: 28px 28px 24px;
-      text-align: left;
+      max-width:1200px; margin:60px auto 28px;
+      background:linear-gradient(180deg,var(--surface),var(--surface-2));
+      border:1px solid var(--border); border-radius:20px; padding:28px; box-shadow:var(--shadow-1);
     }
-    .brand{
-      display:flex; align-items:center; gap:14px; margin-bottom:12px;
-    }
-    .logo{
-      width: 44px; height: 44px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent-600), var(--accent));
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.15);
-    }
-    .brand h1{
-      font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--muted);
-    }
-    .title{
-      display:flex; flex-wrap:wrap; align-items:baseline; gap:10px;
-    }
-    .title h2{ font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
-    .title .pill{
-      font-size: 13px; font-weight: 600; color: var(--accent);
-      background: var(--accent-100); border: 1px solid var(--border);
-      padding: 6px 10px; border-radius: 999px;
-    }
-    .subhead{
-      margin-top:6px; color: var(--muted); font-size: 14px;
+    .brand{ display:flex; align-items:center; gap:14px; margin-bottom:10px }
+    .logo{ width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#6d28d9,var(--accent)); box-shadow:inset 0 0 0 2px rgba(255,255,255,.12) }
+    .brand h1{ font-size:14px; font-weight:800; letter-spacing:.14em; color:var(--muted); text-transform:uppercase }
+    .title{ display:flex; flex-wrap:wrap; gap:10px; align-items:baseline }
+    .title h2{ font-size:32px; font-weight:800; letter-spacing:-.02em }
+    .pill{ font-size:13px; font-weight:600; color:var(--accent); background:rgba(139,92,246,.12); border:1px solid var(--border); padding:6px 10px; border-radius:999px }
+    .subhead{ margin-top:6px; color:var(--muted); font-size:14px }
+
+    .dashboard-container{ max-width:1200px; margin:0 auto }
+    .section-title{ margin:28px 0 14px; font-size:18px; font-weight:700; display:flex; gap:10px; align-items:center }
+    .section-title::before{ content:""; width:10px; height:10px; border-radius:3px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-300)); box-shadow:0 0 0 4px rgba(139,92,246,.1)
     }
 
-    .dashboard-container{ max-width: 1200px; margin: 0 auto; }
+    .metrics-grid{ display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-bottom:18px }
+    .metric-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--shadow-1); transition:.2s }
+    .metric-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-2); border-color:rgba(139,92,246,.18) }
+    .metric-card h3{ font-size:14px; font-weight:700; color:var(--muted); margin-bottom:12px }
 
-    .section-title{
-      margin: 28px 0 14px;
-      font-size: 18px; font-weight: 700; letter-spacing: .02em;
-      display:flex; align-items:center; gap:10px;
-      color: var(--text);
-    }
-    .section-title::before{
-      content:'';
-      display:inline-block; width:10px; height:10px; border-radius:3px;
-      background: linear-gradient(135deg, var(--accent-600), var(--accent-300));
-      box-shadow: 0 0 0 4px var(--accent-100);
-    }
+    .chart-container{ position:relative; width:100%; height:300px }
+    .stat-grid{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)) }
+    .stat{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:12px; padding:16px }
+    .stat .label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.06em; text-transform:uppercase }
+    .stat .value{ margin-top:6px; font-size:30px; font-weight:800; letter-spacing:-.02em }
 
-    .metrics-grid{
-      display:grid; gap:18px;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      margin-bottom: 18px;
-    }
+    .table-container{ overflow-x:auto; margin-top:8px }
+    table{ width:100%; border-collapse:collapse; font-size:14px }
+    th,td{ padding:12px 10px; border-bottom:1px solid var(--border) }
+    th{ text-align:left; font-weight:700; background:linear-gradient(180deg,var(--surface-2),var(--surface)) }
+    tr:hover td{ background:rgba(139,92,246,.06) }
 
-    .metric-card{
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-1);
-      padding: 18px;
-      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
-    }
-    .metric-card:hover{ transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--accent-100); }
-    .metric-card h3{
-      font-size: 14px; font-weight: 700; letter-spacing:.02em;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
+    .diversity-indicators{ display:flex; flex-wrap:wrap; gap:16px; padding:4px }
+    .diversity-item{ flex:1; min-width:160px; display:flex; align-items:center; gap:12px; background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:12px; padding:12px 14px }
+    .diversity-badge{ width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg,#6d28d9,var(--accent)); display:grid; place-items:center; color:#fff; font-size:18px; font-weight:700; box-shadow:inset 0 0 0 2px rgba(255,255,255,.14) }
+    .diversity-text .val{ font-weight:800; font-size:22px; letter-spacing:-.02em }
+    .diversity-text .lbl{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em }
+    .diversity-text .note{ margin-top:2px; font-size:12px; color:var(--accent); font-weight:600 }
 
-    .chart-container{ position: relative; width: 100%; height: 300px; }
-
-    .stat-grid{
-      display:grid; gap:14px;
-      grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-    }
-    .stat{
-      background: linear-gradient(180deg, var(--surface), var(--surface-2));
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding:16px;
-      text-align:left;
-    }
-    .stat .label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.06em; text-transform: uppercase;}
-    .stat .value{ margin-top:6px; font-size:30px; font-weight:800; letter-spacing: -0.02em; }
-
-    .table-container{ overflow-x:auto; margin-top:8px; }
-    table{ width:100%; border-collapse: collapse; font-size: 14px; }
-    th,td{ padding:12px 10px; border-bottom:1px solid var(--border); }
-    th{
-      text-align:left; font-weight:700; color:var(--text);
-      background: linear-gradient(180deg, var(--surface-2), var(--surface));
-      position: sticky; top:0; z-index:1;
-    }
-    tr:hover td{ background: rgba(139,92,246,.06); }
-
-    .diversity-indicators{
-      display:flex; flex-wrap:wrap; gap:16px; padding:4px;
-    }
-    .diversity-item{
-      flex:1; min-width: 160px;
-      display:flex; align-items:center; gap:12px;
-      background: linear-gradient(180deg, var(--surface), var(--surface-2));
-      border:1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding:12px 14px;
-    }
-    .diversity-badge{
-      width:42px; height:42px; border-radius:10px;
-      background: linear-gradient(135deg, var(--accent-600), var(--accent));
-      display:grid; place-items:center; color:#fff; font-size:18px; font-weight:700;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.14);
-    }
-    .diversity-text .val{ font-weight:800; font-size:22px; letter-spacing:-.02em; }
-    .diversity-text .lbl{ color:var(--muted); font-size:12px; text-transform: uppercase; letter-spacing:.06em; }
-    .diversity-text .note{ margin-top:2px; font-size:12px; color:var(--accent-600); font-weight:600; }
-
-    @media print{
-      body{ padding:0; background:#fff; }
-      .header{ box-shadow:none; }
-      .metric-card{ break-inside: avoid; }
-    }
+    .hint{ margin:8px 0 0 4px; color:var(--muted); font-size:12px }
+    .empty{ color:var(--muted); font-size:14px; padding:10px 0 }
   </style>
 </head>
 <body>
-  <button class="print-button" onclick="window.print()">📄 Exportar PDF</button>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <label class="load-button" for="xlsxInput">📥 Carregar Excel</label>
+    <input id="xlsxInput" type="file" accept=".xlsx,.xls"/>
+    <button class="print-button" onclick="window.print()">📄 Exportar PDF</button>
+  </div>
 
+  <!-- Header -->
   <header class="header">
     <div class="brand">
       <div class="logo" aria-hidden="true"></div>
@@ -218,116 +105,79 @@
       <span class="pill">Processos Seletivos · 2025</span>
     </div>
     <p class="subhead">Atualizado em: Outubro 2025</p>
+    <p class="hint">Dica: clique em “Carregar Excel” ou deixe um arquivo em <code>/public/dados/controle-vagas.xlsx</code> para autoload.</p>
   </header>
 
+  <!-- Dashboard -->
   <main class="dashboard-container">
-    <!-- Resumo Executivo -->
     <section>
       <h3 class="section-title">📊 Resumo Executivo</h3>
       <div class="stat-grid">
-        <div class="stat"><div class="label">Total de Vagas</div><div class="value">128</div></div>
-        <div class="stat"><div class="label">Contratações</div><div class="value">93</div></div>
-        <div class="stat"><div class="label">Taxa de Conversão</div><div class="value">72,7%</div></div>
-        <div class="stat"><div class="label">Em Andamento</div><div class="value">16</div></div>
+        <div class="stat"><div class="label">Total de Vagas</div><div class="value" id="kpiTotal">—</div></div>
+        <div class="stat"><div class="label">Contratações</div><div class="value" id="kpiContratadas">—</div></div>
+        <div class="stat"><div class="label">Taxa de Conversão</div><div class="value" id="kpiConversao">—</div></div>
+        <div class="stat"><div class="label">Em Andamento</div><div class="value" id="kpiAndamento">—</div></div>
       </div>
     </section>
 
-    <!-- Volumetria dos Processos -->
     <section>
       <h3 class="section-title">📈 Volumetria dos Processos</h3>
       <div class="metrics-grid">
         <div class="metric-card">
           <h3>Status das Requisições</h3>
           <div class="chart-container"><canvas id="statusReqChart"></canvas></div>
+          <div class="empty" id="emptyReq" style="display:none">Nenhuma coluna de “Status da Requisição” encontrada.</div>
         </div>
         <div class="metric-card">
           <h3>Status dos Processos</h3>
           <div class="chart-container"><canvas id="statusProcChart"></canvas></div>
+          <div class="empty" id="emptyProc" style="display:none">Nenhuma coluna de “Status do Processo” encontrada.</div>
         </div>
         <div class="metric-card">
           <h3>Vagas por Local</h3>
           <div class="chart-container"><canvas id="localChart"></canvas></div>
+          <div class="empty" id="emptyLocal" style="display:none">Nenhuma coluna “Local” encontrada.</div>
         </div>
         <div class="metric-card">
           <h3>Perfil das Vagas</h3>
           <div class="chart-container"><canvas id="nivelChart"></canvas></div>
+          <div class="empty" id="emptyNivel" style="display:none">Nenhuma coluna “Nível/Senioridade” encontrada.</div>
         </div>
       </div>
     </section>
 
-    <!-- Distribuição por Diretoria -->
     <section>
       <h3 class="section-title">🏢 Distribuição por Diretoria</h3>
       <div class="metric-card">
-        <h3>Top 10 Diretorias com Mais Vagas</h3>
-        <div class="chart-container" style="height: 400px;"><canvas id="diretoriaChart"></canvas></div>
+        <h3>Top Diretorias com Mais Vagas</h3>
+        <div class="chart-container" style="height:400px"><canvas id="diretoriaChart"></canvas></div>
+        <div class="empty" id="emptyDir" style="display:none">Nenhuma coluna “Diretoria/BU/Área” encontrada.</div>
       </div>
     </section>
 
-    <!-- Diversidade e Inclusão -->
     <section>
       <h3 class="section-title">🌈 Diversidade e Inclusão</h3>
       <div class="metric-card">
         <h3>Indicadores de Diversidade nas Contratações</h3>
-        <div class="diversity-indicators">
-          <div class="diversity-item">
-            <div class="diversity-badge">♀</div>
-            <div class="diversity-text">
-              <div class="val">13</div>
-              <div class="lbl">Mulheres</div>
-              <div class="note">14% do total</div>
-            </div>
-          </div>
-          <div class="diversity-item">
-            <div class="diversity-badge">🤝</div>
-            <div class="diversity-text">
-              <div class="val">17</div>
-              <div class="lbl">Raça</div>
-              <div class="note">18,3% do total</div>
-            </div>
-          </div>
-          <div class="diversity-item">
-            <div class="diversity-badge">♿</div>
-            <div class="diversity-text">
-              <div class="val">0</div>
-              <div class="lbl">PCD</div>
-              <div class="note" style="color:var(--bad)">0% do total</div>
-            </div>
-          </div>
-          <div class="diversity-item">
-            <div class="diversity-badge">50+</div>
-            <div class="diversity-text">
-              <div class="val">5</div>
-              <div class="lbl">Faixa Etária</div>
-              <div class="note">5,4% do total</div>
-            </div>
-          </div>
+        <div class="diversity-indicators" id="diversityBadges">
+          <div class="diversity-item"><div class="diversity-badge">♀</div><div class="diversity-text"><div class="val" id="divMulheres">—</div><div class="lbl">Mulheres</div><div class="note" id="divMulheresPct">—</div></div></div>
+          <div class="diversity-item"><div class="diversity-badge">🤝</div><div class="diversity-text"><div class="val" id="divRaca">—</div><div class="lbl">Raça</div><div class="note" id="divRacaPct">—</div></div></div>
+          <div class="diversity-item"><div class="diversity-badge">♿</div><div class="diversity-text"><div class="val" id="divPCD">—</div><div class="lbl">PCD</div><div class="note" id="divPCDPct">—</div></div></div>
+          <div class="diversity-item"><div class="diversity-badge">50+</div><div class="diversity-text"><div class="val" id="div50">—</div><div class="lbl">Faixa Etária</div><div class="note" id="div50Pct">—</div></div></div>
         </div>
-
-        <div class="chart-container" style="height: 320px; margin-top: 18px;">
-          <canvas id="diversityChart"></canvas>
-        </div>
+        <div class="chart-container" style="height:320px;margin-top:18px"><canvas id="diversityChart"></canvas></div>
       </div>
     </section>
 
-    <!-- Análise Detalhada -->
     <section>
       <h3 class="section-title">📋 Análise Detalhada</h3>
       <div class="metrics-grid">
         <div class="metric-card">
           <h3>Taxa de Aprovação por Status</h3>
           <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Status</th><th>Quantidade</th><th>Percentual</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>Contratada</td><td>93</td><td>72,7%</td></tr>
-                <tr><td>Congelada</td><td>16</td><td>12,5%</td></tr>
-                <tr><td>Cancelada</td><td>16</td><td>12,5%</td></tr>
-                <tr><td>Declínio de Oferta</td><td>2</td><td>1,6%</td></tr>
-                <tr><td>Em Processo</td><td>1</td><td>0,8%</td></tr>
-              </tbody>
+            <table id="tblAprov">
+              <thead><tr><th>Status</th><th>Quantidade</th><th>Percentual</th></tr></thead>
+              <tbody></tbody>
             </table>
           </div>
         </div>
@@ -335,14 +185,12 @@
           <h3>Principais Métricas de Performance</h3>
           <div class="table-container">
             <table>
-              <thead>
-                <tr><th>Métrica</th><th>Valor</th><th>Meta</th><th>Status</th></tr>
-              </thead>
+              <thead><tr><th>Métrica</th><th>Valor</th><th>Meta</th><th>Status</th></tr></thead>
               <tbody>
-                <tr><td>Taxa de Conversão</td><td>72,7%</td><td>70%</td><td style="color:var(--good);font-weight:700">✓ Atingido</td></tr>
-                <tr><td>Diversidade Gênero</td><td>14%</td><td>30%</td><td style="color:var(--warn);font-weight:700">⚠ Em progresso</td></tr>
-                <tr><td>Inclusão PCD</td><td>0%</td><td>5%</td><td style="color:var(--bad);font-weight:700">✗ Abaixo da meta</td></tr>
-                <tr><td>Taxa de Cancelamento</td><td>12,5%</td><td>15%</td><td style="color:var(--good);font-weight:700">✓ Dentro do esperado</td></tr>
+                <tr><td>Taxa de Conversão</td><td id="mConv">—</td><td>70%</td><td id="mConvSt">—</td></tr>
+                <tr><td>Diversidade Gênero</td><td id="mGen">—</td><td>30%</td><td id="mGenSt">—</td></tr>
+                <tr><td>Inclusão PCD</td><td id="mPCD">—</td><td>5%</td><td id="mPCDSt">—</td></tr>
+                <tr><td>Taxa de Cancelamento</td><td id="mCanc">—</td><td>15%</td><td id="mCancSt">—</td></tr>
               </tbody>
             </table>
           </div>
@@ -352,179 +200,298 @@
   </main>
 
   <script>
-    // Tipografia global dos gráficos
+    // === Chart.js defaults ===
     Chart.defaults.font.family = "'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
     Chart.defaults.plugins.legend.labels.boxWidth = 10;
 
-    // Paleta coerente com o CSS
     const palette = {
-      violet700: "#6d28d9",
-      violet600: "#7c3aed",
-      violet500: "#8b5cf6",
-      violet300: "#c4b5fd",
-      gray600:   "#4b5563",
-      gray300:   "#d1d5db",
-      green600:  "#16a34a",
-      amber500:  "#f59e0b",
-      red500:    "#ef4444",
-      slate800:  "#1f2937"
+      violet600:"#7c3aed", violet500:"#8b5cf6", violet300:"#c4b5fd",
+      gray600:"#4b5563", gray300:"#d1d5db",
+      green:"#16a34a", amber:"#f59e0b", red:"#ef4444"
     };
 
-    // Dados (mesmos do original)
-    const data = {
-      statusRequisicao: { Aprovada: 56, Cancelada: 4, Preenchida: 68 },
-      statusProcesso: { Contratada: 93, Congelada: 16, Cancelada: 16, 'Declínio de carta oferta': 2, 'Em Processo': 1 },
-      local: { Escritório: 72, Campo: 29, BIC: 13, Fábrica: 12, 'Não especificado': 2 },
-      nivel: { Estágio: 41, Analista: 27, Vendas: 19, Gerencial: 12, Especialista: 10, 'Jovem Aprendiz': 10, 'Supervisão/Coordenação': 6, 'Demais vagas': 1, 'Não especificado': 2 },
-      diretoria: { 'Desenvolvimento Comercial': 26, Marketing: 20, BIC: 15, Vendas: 10, Financeiro: 9, Industrial: 9, Logística: 8, RH: 7, Comercial: 5, Fábrica: 3, 'Supply Chain': 3, Outros: 13 },
-      diversidade: { Mulheres: 13, 'Negros/Pardos': 17, PCD: 0, '50+': 5 }
+    // =======================
+    // Util: normalização texto
+    // =======================
+    const normalize = s => (s||"")
+      .toString()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // remove acentos
+      .replace(/\s+/g," ")
+      .trim()
+      .toLowerCase();
+
+    // Aliases de colunas (ajustados pra sua planilha)
+    const COLS = {
+      statusRequisicao: [
+        "status requisicao","status da requisicao","status req","status requisic","status requisição","status da requisição"
+      ],
+      statusProcesso: [
+        "status processo","status do processo","status proc"
+      ],
+      local: ["local","localidade","cidade","site"],
+      nivel: ["nivel","nível","senioridade","perfil da vaga","perfil"],
+      diretoria: ["diretoria","bu","area","área","departamento","unidade","unidade de negocio","unidade de negócio"],
+      divMulher: ["mulheres","genero","gênero","sexo feminino","feminino"],
+      divRaca: ["raca","raça","cor","negros/pardos","etnia"],
+      divPCD: ["pcd","deficiencia","deficiência","inclui pcd","cota pcd"],
+      div50: ["50+","faixa etaria","faixa etária","idade","idade 50+"]
     };
 
-    // Helpers visuais
-    const ringColors = [palette.violet700, palette.violet600, palette.violet500, palette.violet300, palette.gray300, palette.gray600];
-    const altColors  = [palette.violet600, palette.violet500, palette.violet300, palette.gray600, palette.gray300, palette.violet700];
-
-    // Doughnut – Status das Requisições
-    new Chart(document.getElementById('statusReqChart'), {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(data.statusRequisicao),
-        datasets: [{
-          data: Object.values(data.statusRequisicao),
-          backgroundColor: ringColors,
-          borderColor: "#fff",
-          borderWidth: 2,
-          hoverOffset: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: {
-          legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 }} },
-          tooltip: { callbacks:{ label: c => `${c.label}: ${c.parsed}` } }
+    // Detecta a linha de cabeçalho (olha primeiras 30 linhas)
+    function detectHeaderRow(rows){
+      let bestRow = -1, bestScore = -1;
+      for(let r=0; r<Math.min(rows.length, 30); r++){
+        const cells = rows[r].map(c => normalize(c));
+        let score = 0;
+        const allTargets = [
+          ...COLS.statusRequisicao, ...COLS.statusProcesso,
+          ...COLS.local, ...COLS.nivel, ...COLS.diretoria
+        ];
+        for(const t of allTargets){
+          if(cells.some(c => c.includes(t))) score++;
         }
+        if(score > bestScore){ bestScore = score; bestRow = r; }
       }
-    });
+      return bestRow;
+    }
 
-    // Pie – Status dos Processos
-    new Chart(document.getElementById('statusProcChart'), {
-      type: 'pie',
-      data: {
-        labels: Object.keys(data.statusProcesso),
-        datasets: [{
-          data: Object.values(data.statusProcesso),
-          backgroundColor: altColors,
-          borderColor: "#fff",
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } }
-        }
-      }
-    });
-
-    // Bar – Vagas por Local
-    new Chart(document.getElementById('localChart'), {
-      type: 'bar',
-      data: {
-        labels: Object.keys(data.local),
-        datasets: [{
-          label: 'Quantidade de Vagas',
-          data: Object.values(data.local),
-          backgroundColor: palette.violet600,
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { grid: { display:false } },
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 10 },
-            grid: { color: 'rgba(0,0,0,.06)' }
+    // Mapa {chave canonica -> índice da coluna}
+    function buildHeaderMap(headerRow){
+      const map = {};
+      headerRow.forEach((raw, idx) => {
+        const h = normalize(raw);
+        for(const [key, aliases] of Object.entries(COLS)){
+          for(const a of aliases){
+            if(h.includes(a)){ map[key] = idx; break; }
           }
-        },
-        plugins: { legend: { display:false } }
+          if(map[key] !== undefined) break;
+        }
+      });
+      return map;
+    }
+
+    // Lê TODAS as sheets
+    function readWorkbookAllSheets(wb){
+      const all = [];
+      for(const name of wb.SheetNames){
+        const ws = wb.Sheets[name];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+        if(!rows.length) continue;
+
+        const headerIdx = detectHeaderRow(rows);
+        if(headerIdx < 0) continue;
+
+        const header = rows[headerIdx];
+        const map = buildHeaderMap(header);
+
+        const hasAny =
+          map.statusRequisicao !== undefined ||
+          map.statusProcesso   !== undefined ||
+          map.local            !== undefined ||
+          map.nivel            !== undefined ||
+          map.diretoria        !== undefined;
+
+        if(!hasAny) continue;
+
+        for(let r = headerIdx+1; r < rows.length; r++){
+          const row = rows[r] || [];
+          all.push({
+            statusRequisicao: map.statusRequisicao!==undefined ? row[map.statusRequisicao] : "",
+            statusProcesso:   map.statusProcesso!==undefined   ? row[map.statusProcesso]   : "",
+            local:            map.local!==undefined            ? row[map.local]            : "",
+            nivel:            map.nivel!==undefined            ? row[map.nivel]            : "",
+            diretoria:        map.diretoria!==undefined        ? row[map.diretoria]        : "",
+            divMulher:        map.divMulher!==undefined        ? row[map.divMulher]        : "",
+            divRaca:          map.divRaca!==undefined          ? row[map.divRaca]          : "",
+            divPCD:           map.divPCD!==undefined           ? row[map.divPCD]           : "",
+            div50:            map.div50!==undefined            ? row[map.div50]            : ""
+          });
+        }
       }
+      return all;
+    }
+
+    // Agrupador simples
+    function countBy(items, getter){
+      const m = new Map();
+      for(const it of items){
+        const k = normalize(getter(it));
+        if(!k) continue;
+        m.set(k, (m.get(k)||0)+1);
+      }
+      const obj = {};
+      for(const [k,v] of m.entries()){
+        const pretty = k.replace(/\b\w/g, c => c.toUpperCase());
+        obj[pretty] = v;
+      }
+      return obj;
+    }
+
+    function updateKPIs(all, procCounts){
+      const total = all.length;
+      const contratadas = (procCounts["Contratada"]||procCounts["Contratado"]||0);
+      const emProc = (procCounts["Em Processo"]||0);
+      const canceladas = (procCounts["Cancelada"]||0);
+
+      const conversao = total ? (contratadas/total*100) : 0;
+      const cancelPct = total ? (canceladas/total*100) : 0;
+
+      kpiTotal.textContent = total.toString();
+      kpiContratadas.textContent = contratadas.toString();
+      kpiConversao.textContent = total? `${conversao.toFixed(1)}%` : "—";
+      kpiAndamento.textContent = emProc.toString();
+
+      const tbody = document.querySelector("#tblAprov tbody");
+      tbody.innerHTML = "";
+      const sum = Object.values(procCounts).reduce((a,b)=>a+b,0);
+      Object.entries(procCounts).sort((a,b)=>b[1]-a[1]).forEach(([st,qty])=>{
+        const pct = sum? ((qty/sum)*100).toFixed(1) : "0.0";
+        tbody.insertAdjacentHTML("beforeend", `<tr><td>${st}</td><td>${qty}</td><td>${pct}%</td></tr>`);
+      });
+
+      mConv.textContent = total? `${conversao.toFixed(1)}%` : "—";
+      mConvSt.textContent = conversao >= 70 ? "✓ Atingido" : "⚠ Em progresso";
+      mConvSt.style.color = conversao >= 70 ? "var(--good)" : "var(--warn)";
+
+      mCanc.textContent = total? `${cancelPct.toFixed(1)}%` : "—";
+      mCancSt.textContent = cancelPct <= 15 ? "✓ Dentro do esperado" : "✗ Acima do esperado";
+      mCancSt.style.color = cancelPct <= 15 ? "var(--good)" : "var(--bad)";
+    }
+
+    function updateDiversity(all){
+      const total = all.length || 0;
+      const getNum = key => {
+        const vals = all.map(r => r[key]).filter(v => v!=="" && !isNaN(Number(v)));
+        return vals.length ? Math.max(...vals.map(Number)) : 0;
+      };
+      const mulheres = getNum("divMulher");
+      const raca = getNum("divRaca");
+      const pcd = getNum("divPCD");
+      const mais50 = getNum("div50");
+
+      const set = (idVal, idPct, n) => {
+        document.getElementById(idVal).textContent = n || "—";
+        document.getElementById(idPct).textContent = total? `${((n/total)*100).toFixed(1)}% do total` : "—";
+      };
+      set("divMulheres","divMulheresPct", mulheres);
+      set("divRaca","divRacaPct", raca);
+      set("divPCD","divPCDPct", pcd);
+      set("div50","div50Pct", mais50);
+
+      const ctx = document.getElementById("diversityChart").getContext("2d");
+      if(window._divChart) window._divChart.destroy();
+      window._divChart = new Chart(ctx, {
+        type:"bar",
+        data:{
+          labels:["Mulheres","Raça","PCD","50+"],
+          datasets:[
+            {label:"Contratações", data:[mulheres,raca,pcd,mais50], backgroundColor:[palette.violet600,palette.violet500,palette.red,palette.amber], borderRadius:8},
+            {label:"Meta", data:[30,20,5,10], backgroundColor:"rgba(15,23,42,.12)", borderRadius:8}
+          ]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          scales:{ y:{ beginAtZero:true, ticks:{stepSize:5}, grid:{color:"rgba(255,255,255,.06)"} }, x:{ grid:{display:false} } },
+          plugins:{ legend:{ position:"bottom" } }
+        }
+      });
+
+      const g = mulheres && total? (mulheres/total*100):null;
+      mGen.textContent = g!=null? `${g.toFixed(1)}%`:"—";
+      mGenSt.textContent = g!=null ? (g>=30?"✓ Atingido":"⚠ Em progresso") : "—";
+      mGenSt.style.color = g!=null ? (g>=30?"var(--good)":"var(--warn)") : "var(--muted)";
+
+      const p = pcd && total? (pcd/total*100):0;
+      mPCD.textContent = total? `${p.toFixed(1)}%`:"—";
+      mPCDSt.textContent = total? (p>=5?"✓ Atingido":"✗ Abaixo da meta"):"—";
+      mPCDSt.style.color = total? (p>=5?"var(--good)":"var(--bad)"):"var(--muted)";
+    }
+
+    function renderCharts(reqCounts, procCounts, localCounts, nivelCounts, dirCounts){
+      emptyReq.style.display   = Object.keys(reqCounts).length ? "none" : "block";
+      emptyProc.style.display  = Object.keys(procCounts).length ? "none" : "block";
+      emptyLocal.style.display = Object.keys(localCounts).length ? "none" : "block";
+      emptyNivel.style.display = Object.keys(nivelCounts).length ? "none" : "block";
+      emptyDir.style.display   = Object.keys(dirCounts).length ? "none" : "block";
+
+      const ringColors=[palette.violet600,palette.violet500,palette.violet300, palette.gray300, palette.gray600];
+      if(window._req) window._req.destroy();
+      window._req=new Chart(statusReqChart.getContext('2d'),{
+        type:'doughnut',
+        data:{labels:Object.keys(reqCounts), datasets:[{data:Object.values(reqCounts), backgroundColor:ringColors, borderColor:"#fff", borderWidth:2, hoverOffset:6}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:12}}}}}
+      });
+
+      if(window._proc) window._proc.destroy();
+      window._proc=new Chart(statusProcChart.getContext('2d'),{
+        type:'pie',
+        data:{labels:Object.keys(procCounts), datasets:[{data:Object.values(procCounts), backgroundColor:[palette.violet600,palette.violet500,palette.violet300,palette.gray600,palette.gray300], borderColor:"#fff", borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:12}}}}}
+      });
+
+      if(window._local) window._local.destroy();
+      window._local=new Chart(localChart.getContext('2d'),{
+        type:'bar',
+        data:{labels:Object.keys(localCounts), datasets:[{label:'Quantidade de Vagas', data:Object.values(localCounts), backgroundColor:palette.violet600, borderRadius:8}]},
+        options:{responsive:true,maintainAspectRatio:false,scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:10},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}}
+      });
+
+      if(window._nivel) window._nivel.destroy();
+      window._nivel=new Chart(nivelChart.getContext('2d'),{
+        type:'polarArea',
+        data:{labels:Object.keys(nivelCounts), datasets:[{data:Object.values(nivelCounts), backgroundColor:['#7c3aeddd','#8b5cf6dd','#c4b5fddd','#9ca3afdd','#cbd5e1dd','#6b7280dd','#a78bfa','#6366f1','#60a5fadd'], borderColor:'rgba(255,255,255,.9)', borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11}}}},scales:{r:{grid:{color:'rgba(255,255,255,.06)'}}}}
+      });
+
+      if(window._dir) window._dir.destroy();
+      const dirEntries = Object.entries(dirCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      window._dir=new Chart(diretoriaChart.getContext('2d'),{
+        type:'bar',
+        data:{labels:dirEntries.map(d=>d[0]), datasets:[{label:'Número de Vagas', data:dirEntries.map(d=>d[1]), backgroundColor:dirEntries.map((_,i)=> i%2? palette.violet600:palette.violet500), borderRadius:8}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{y:{grid:{display:false}},x:{beginAtZero:true,ticks:{stepSize:5},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}}
+      });
+    }
+
+    // === Upload manual ===
+    xlsxInput.addEventListener("change", async ev=>{
+      const f = ev.target.files?.[0];
+      if(!f) return;
+      const ab = await f.arrayBuffer();
+      await parseArrayBuffer(ab);
     });
 
-    // Polar Area – Perfil das Vagas
-    new Chart(document.getElementById('nivelChart'), {
-      type: 'polarArea',
-      data: {
-        labels: Object.keys(data.nivel),
-        datasets: [{
-          data: Object.values(data.nivel),
-          backgroundColor: [
-            palette.violet700 + 'dd', palette.violet600 + 'dd', palette.violet500 + 'dd',
-            palette.violet300 + 'dd', palette.gray600 + 'dd',   palette.gray300 + 'dd',
-            '#9ca3afdd', '#cbd5e1dd', '#818cf8dd'
-          ],
-          borderColor: 'rgba(255,255,255,.9)',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{ legend:{ position:'right', labels:{ font:{ size:11 } } } },
-        scales:{ r:{ grid:{ color:'rgba(0,0,0,.06)' } } }
-      }
-    });
+    // === Autoload do /public (ajuste o nome do arquivo) ===
+    const AUTOLOAD_XLSX_URL = "/dados/controle-vagas.xlsx"; // coloque sua planilha aqui
 
-    // Horizontal Bar – Diretorias
-    new Chart(document.getElementById('diretoriaChart'), {
-      type: 'bar',
-      data: {
-        labels: Object.keys(data.diretoria),
-        datasets: [{
-          label: 'Número de Vagas',
-          data: Object.values(data.diretoria),
-          backgroundColor: Object.values(data.diretoria).map((_,i)=> i%2? palette.violet600: palette.violet500),
-          borderRadius: 8
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          y:{ grid:{ display:false } },
-          x:{ beginAtZero:true, ticks:{ stepSize:5 }, grid:{ color:'rgba(0,0,0,.06)' } }
-        },
-        plugins:{ legend:{ display:false } }
-      }
-    });
+    async function parseArrayBuffer(ab){
+      const wb = XLSX.read(ab, { type: "array" });
+      const all = readWorkbookAllSheets(wb);
+      const reqCounts   = countBy(all, r => r.statusRequisicao);
+      const procCounts  = countBy(all, r => r.statusProcesso);
+      const localCounts = countBy(all, r => r.local);
+      const nivelCounts = countBy(all, r => r.nivel);
+      const dirCounts   = countBy(all, r => r.diretoria);
+      updateKPIs(all, procCounts);
+      updateDiversity(all);
+      renderCharts(reqCounts, procCounts, localCounts, nivelCounts, dirCounts);
+    }
 
-    // Grupo – Diversidade
-    new Chart(document.getElementById('diversityChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Mulheres','Raça','PCD','50+'],
-        datasets: [
-          { label:'Contratações', data:[13,17,0,5], backgroundColor: [palette.violet600, palette.violet500, palette.red500, palette.amber500], borderRadius: 8 },
-          { label:'Meta', data:[30,20,5,10], backgroundColor: 'rgba(15,23,42,.12)', borderRadius: 8 }
-        ]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          y:{ beginAtZero:true, max:35, ticks:{ stepSize:5 }, grid:{ color:'rgba(0,0,0,.06)' } },
-          x:{ grid:{ display:false } }
-        },
-        plugins:{ legend:{ position:'bottom' } }
+    async function autoload(){
+      try{
+        if(!AUTOLOAD_XLSX_URL) return;
+        const res = await fetch(AUTOLOAD_XLSX_URL, { cache: "no-cache" });
+        if(!res.ok) throw new Error("Falha ao baixar XLSX: "+res.status);
+        const ab = await res.arrayBuffer();
+        await parseArrayBuffer(ab);
+      }catch(e){
+        console.warn("Autoload falhou (use o botão Carregar Excel):", e);
+        renderCharts({}, {}, {}, {}, {});
       }
-    });
+    }
+
+    // Inicialização
+    (async ()=>{ await autoload(); })();
   </script>
 </body>
 </html>
