@@ -1,497 +1,1254 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Indicadores A&S - Pierre Fabre 2025</title>
-
-  <!-- Fonte e libs -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-  <style>
-    :root{
-      --bg:#0b0d12; --surface:#111418; --surface-2:#151a20;
-      --text:#e5e7eb; --muted:#a1a1aa; --border:#1f242b;
-      --accent:#7c3aed; --accent-500:#8b5cf6; --accent-300:#c4b5fd; --accent-100:#ede9fe;
-      --good:#16a34a; --warn:#f59e0b; --bad:#ef4444;
-      --radius-lg:16px; --radius-md:12px;
-      --shadow-1:0 6px 22px rgba(0,0,0,.35); --shadow-2:0 18px 40px rgba(0,0,0,.45);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background:
-        radial-gradient(1000px 600px at 10% -10%, rgba(139,92,246,.12), transparent 60%),
-        radial-gradient(800px 500px at 110% 10%, rgba(139,92,246,.12), transparent 55%),
-        var(--bg);
-      color:var(--text); padding:24px;
-    }
-    .print-button,.load-button{
-      background:var(--surface); border:1px solid var(--border); color:var(--text);
-      padding:10px 16px; border-radius:999px; font-weight:600; font-size:14px; cursor:pointer;
-      box-shadow:var(--shadow-1); transition:.2s; display:inline-flex; align-items:center; gap:8px;
-    }
-    .print-button:hover,.load-button:hover{ transform:translateY(-2px); box-shadow:var(--shadow-2); border-color:var(--accent-300)}
-    .toolbar{ display:flex; gap:12px; position:fixed; top:18px; right:18px; z-index:1000; }
-    .toolbar input{ display:none }
-    @media print{ .toolbar{display:none} body{background:#fff} }
-
-    .header{
-      max-width:1200px; margin:60px auto 28px;
-      background:linear-gradient(180deg,var(--surface),var(--surface-2));
-      border:1px solid var(--border); border-radius:20px; padding:28px; box-shadow:var(--shadow-1);
-    }
-    .brand{ display:flex; align-items:center; gap:14px; margin-bottom:10px }
-    .logo{ width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#6d28d9,var(--accent)); box-shadow:inset 0 0 0 2px rgba(255,255,255,.12) }
-    .brand h1{ font-size:14px; font-weight:800; letter-spacing:.14em; color:var(--muted); text-transform:uppercase }
-    .title{ display:flex; flex-wrap:wrap; gap:10px; align-items:baseline }
-    .title h2{ font-size:32px; font-weight:800; letter-spacing:-.02em }
-    .pill{ font-size:13px; font-weight:600; color:var(--accent); background:rgba(139,92,246,.12); border:1px solid var(--border); padding:6px 10px; border-radius:999px }
-    .subhead{ margin-top:6px; color:var(--muted); font-size:14px }
-
-    .dashboard-container{ max-width:1200px; margin:0 auto }
-    .section-title{ margin:28px 0 14px; font-size:18px; font-weight:700; display:flex; gap:10px; align-items:center }
-    .section-title::before{ content:""; width:10px; height:10px; border-radius:3px;
-      background:linear-gradient(135deg,var(--accent),var(--accent-300)); box-shadow:0 0 0 4px rgba(139,92,246,.1)
-    }
-
-    .metrics-grid{ display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-bottom:18px }
-    .metric-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--shadow-1); transition:.2s }
-    .metric-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-2); border-color:rgba(139,92,246,.18) }
-    .metric-card h3{ font-size:14px; font-weight:700; color:var(--muted); margin-bottom:12px }
-
-    .chart-container{ position:relative; width:100%; height:300px }
-    .stat-grid{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)) }
-    .stat{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:12px; padding:16px }
-    .stat .label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.06em; text-transform:uppercase }
-    .stat .value{ margin-top:6px; font-size:30px; font-weight:800; letter-spacing:-.02em }
-
-    .table-container{ overflow-x:auto; margin-top:8px }
-    table{ width:100%; border-collapse:collapse; font-size:14px }
-    th,td{ padding:12px 10px; border-bottom:1px solid var(--border) }
-    th{ text-align:left; font-weight:700; background:linear-gradient(180deg,var(--surface-2),var(--surface)) }
-    tr:hover td{ background:rgba(139,92,246,.06) }
-
-    .diversity-indicators{ display:flex; flex-wrap:wrap; gap:16px; padding:4px }
-    .diversity-item{ flex:1; min-width:160px; display:flex; align-items:center; gap:12px; background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:12px; padding:12px 14px }
-    .diversity-badge{ width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg,#6d28d9,var(--accent)); display:grid; place-items:center; color:#fff; font-size:18px; font-weight:700; box-shadow:inset 0 0 0 2px rgba(255,255,255,.14) }
-    .diversity-text .val{ font-weight:800; font-size:22px; letter-spacing:-.02em }
-    .diversity-text .lbl{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em }
-    .diversity-text .note{ margin-top:2px; font-size:12px; color:var(--accent); font-weight:600 }
-
-    .hint{ margin:8px 0 0 4px; color:var(--muted); font-size:12px }
-    .empty{ color:var(--muted); font-size:14px; padding:10px 0 }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Completo - Indicadores A&S Pierre Fabre 2025</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #005a87 0%, #0084c7 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            color: #90EE90;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        
+        .header h2 {
+            font-size: 1.8em;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+        
+        .logo-container {
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            width: 200px;
+            height: 80px;
+            background: white;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #005a87;
+            font-size: 1.2em;
+        }
+        
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            color: white;
+            font-size: 1.8em;
+            margin: 30px 0 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-card h3 {
+            color: #005a87;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #0084c7;
+            padding-bottom: 10px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .chart-container-large {
+            height: 400px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #0084c7, #005a87);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .diversity-indicators {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .diversity-item {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .diversity-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 10px;
+            background: linear-gradient(135deg, #0084c7, #005a87);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .diversity-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #005a87;
+            margin: 10px 0 5px;
+        }
+        
+        .diversity-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .diversity-percentage {
+            color: #0084c7;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: #005a87;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .kpi-card {
+            background: linear-gradient(135deg, #52c41a, #73d13d);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .kpi-card.warning {
+            background: linear-gradient(135deg, #faad14, #ffc53d);
+        }
+        
+        .kpi-card.danger {
+            background: linear-gradient(135deg, #f5222d, #ff7875);
+        }
+        
+        .recruiter-badge {
+            display: inline-block;
+            background: #0084c7;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .metric-card {
+                break-inside: avoid;
+            }
+            
+            .header {
+                background: none;
+                color: #005a87;
+            }
+            
+            .header h1 {
+                color: #005a87;
+            }
+            
+            .section-title {
+                color: #005a87;
+                background: #f0f0f0;
+            }
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            color: #005a87;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .print-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media print {
+            .print-button {
+                display: none;
+            }
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .timeline-container {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-left: 3px solid #0084c7;
+            margin-left: 20px;
+            position: relative;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #0084c7;
+        }
+    </style>
 </head>
 <body>
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <label class="load-button" for="xlsxInput">📥 Carregar Excel</label>
-    <input id="xlsxInput" type="file" accept=".xlsx,.xls"/>
     <button class="print-button" onclick="window.print()">📄 Exportar PDF</button>
-  </div>
-
-  <!-- Header -->
-  <header class="header">
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <h1>PIERRE FABRE</h1>
+    
+    <div class="header">
+        <div class="logo-container">
+            <div class="logo">
+                Pierre Fabre
+            </div>
+        </div>
+        <h1>Indicadores A&S</h1>
+        <h2>Dashboard Completo de Processos Seletivos - 2025</h2>
+        <p style="margin-top: 10px; opacity: 0.9;">Última atualização: 07 de Outubro de 2025</p>
     </div>
-    <div class="title">
-      <h2>Indicadores A&amp;S</h2>
-      <span class="pill">Processos Seletivos · 2025</span>
+    
+    <div class="dashboard-container">
+        <!-- Resumo Executivo -->
+        <section>
+            <h2 class="section-title">📊 Resumo Executivo - Visão Geral</h2>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-number">128</div>
+                    <div class="stat-label">Total de Vagas</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">93</div>
+                    <div class="stat-label">Contratações Realizadas</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">72.7%</div>
+                    <div class="stat-label">Taxa de Conversão</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">16</div>
+                    <div class="stat-label">Processos Congelados</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">110</div>
+                    <div class="stat-label">Pesquisas de Satisfação</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">2,853</div>
+                    <div class="stat-label">Candidatos Inscritos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">410</div>
+                    <div class="stat-label">Candidatos Apresentados</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">11 dias</div>
+                    <div class="stat-label">Time to Fill Médio</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Volumetria dos Processos -->
+        <section>
+            <h2 class="section-title">📈 Análise de Volumetria dos Processos</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Status das Requisições</h3>
+                    <div class="chart-container">
+                        <canvas id="statusReqChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Status dos Processos</h3>
+                    <div class="chart-container">
+                        <canvas id="statusProcChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Distribuição por Local</h3>
+                    <div class="chart-container">
+                        <canvas id="localChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Perfil das Vagas por Nível</h3>
+                    <div class="chart-container">
+                        <canvas id="nivelChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Tipo de Vínculo</h3>
+                    <div class="chart-container">
+                        <canvas id="vinculoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Performance dos Recrutadores</h3>
+                    <div style="padding: 20px; text-align: center;">
+                        <div style="margin: 20px 0;">
+                            <span class="recruiter-badge" style="font-size: 1.2em;">Caroline: 72 vagas (56.3%)</span>
+                        </div>
+                        <div style="margin: 20px 0;">
+                            <span class="recruiter-badge" style="background: #52c41a;">Fabiana: 56 vagas (43.7%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Distribuição por Área -->
+        <section>
+            <h2 class="section-title">🏢 Análise por Diretoria e Setor</h2>
+            <div class="metric-card full-width">
+                <h3>Distribuição de Vagas por Diretoria</h3>
+                <div class="chart-container chart-container-large">
+                    <canvas id="diretoriaChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Canais de Recrutamento -->
+        <section>
+            <h2 class="section-title">🔍 Canais de Recrutamento e Fontes</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Efetividade dos Canais</h3>
+                    <div class="chart-container">
+                        <canvas id="canaisChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Métricas de Candidatos por Canal</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Canal</th>
+                                    <th>Vagas</th>
+                                    <th>% do Total</th>
+                                    <th>Conversão</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Workday</td>
+                                    <td>70</td>
+                                    <td>54.7%</td>
+                                    <td style="color: green;">Alta</td>
+                                </tr>
+                                <tr>
+                                    <td>Indicação Interna</td>
+                                    <td>65</td>
+                                    <td>50.8%</td>
+                                    <td style="color: green;">Alta</td>
+                                </tr>
+                                <tr>
+                                    <td>LinkedIn</td>
+                                    <td>57</td>
+                                    <td>44.5%</td>
+                                    <td style="color: orange;">Média</td>
+                                </tr>
+                                <tr>
+                                    <td>Candidato Interno</td>
+                                    <td>37</td>
+                                    <td>28.9%</td>
+                                    <td style="color: green;">Alta</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Diversidade e Inclusão -->
+        <section>
+            <h2 class="section-title">🌈 Diversidade, Equidade e Inclusão (DE&I)</h2>
+            <div class="metric-card full-width">
+                <h3>Indicadores de Diversidade nas Contratações</h3>
+                <div class="diversity-indicators">
+                    <div class="diversity-item">
+                        <div class="diversity-icon">👩</div>
+                        <div class="diversity-value">104</div>
+                        <div class="diversity-label">MULHERES</div>
+                        <div class="diversity-percentage">81.3% das vagas</div>
+                    </div>
+                    <div class="diversity-item">
+                        <div class="diversity-icon">🤝</div>
+                        <div class="diversity-value">70</div>
+                        <div class="diversity-label">NEGROS/PARDOS</div>
+                        <div class="diversity-percentage">54.7% das vagas</div>
+                    </div>
+                    <div class="diversity-item">
+                        <div class="diversity-icon">♿</div>
+                        <div class="diversity-value">36</div>
+                        <div class="diversity-label">PCD</div>
+                        <div class="diversity-percentage">28.1% das vagas</div>
+                    </div>
+                    <div class="diversity-item">
+                        <div class="diversity-icon">👴</div>
+                        <div class="diversity-value">45</div>
+                        <div class="diversity-label">50+</div>
+                        <div class="diversity-percentage">35.2% das vagas</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container" style="height: 350px; margin-top: 30px;">
+                    <canvas id="diversityComparisonChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Time to Fill e SLA -->
+        <section>
+            <h2 class="section-title">⏱️ Métricas de Tempo e SLA</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Time to Fill - Distribuição</h3>
+                    <div class="kpi-card">
+                        <strong>Tempo Médio:</strong> 11 dias
+                    </div>
+                    <div class="kpi-card warning">
+                        <strong>Tempo Máximo:</strong> 278 dias
+                    </div>
+                    <div class="kpi-card" style="background: linear-gradient(135deg, #1890ff, #40a9ff);">
+                        <strong>Tempo Mínimo:</strong> 1 dia
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <canvas id="timeToFillChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>SLA por Etapa do Processo</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <span><strong>Alinhamento:</strong> 1-2 dias</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span><strong>Divulgação:</strong> 1 dia</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span><strong>Shortlist:</strong> 3-5 dias</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span><strong>Entrevista Gestor:</strong> 5-7 dias</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span><strong>Carta Oferta:</strong> 1-2 dias</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span><strong>Admissão:</strong> 3-5 dias</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Universidades e Formação -->
+        <section>
+            <h2 class="section-title">🎓 Análise de Universidades e Formação</h2>
+            <div class="metric-card full-width">
+                <h3>Top 10 Universidades dos Contratados</h3>
+                <div class="chart-container chart-container-large">
+                    <canvas id="universidadesChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Pesquisa de Satisfação -->
+        <section>
+            <h2 class="section-title">😊 Pesquisa de Satisfação</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Respondentes por Tipo</h3>
+                    <div class="chart-container">
+                        <canvas id="satisfacaoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Taxa de Resposta</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 4em; color: #52c41a; font-weight: bold;">86%</div>
+                        <div style="font-size: 1.2em; color: #666; margin-top: 10px;">
+                            110 respostas de 128 processos
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div class="kpi-card">
+                                <strong>Gestores:</strong> 23 respostas
+                            </div>
+                            <div class="kpi-card">
+                                <strong>Candidatos Selecionados:</strong> 23 respostas
+                            </div>
+                            <div class="kpi-card warning">
+                                <strong>Candidatos Gerais:</strong> 64 respostas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Análise Detalhada e KPIs -->
+        <section>
+            <h2 class="section-title">📋 KPIs e Métricas de Performance</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Performance Geral</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>KPI</th>
+                                    <th>Atual</th>
+                                    <th>Meta</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Taxa de Conversão</td>
+                                    <td>72.7%</td>
+                                    <td>70%</td>
+                                    <td style="color: green;">✓ Superado</td>
+                                </tr>
+                                <tr>
+                                    <td>Time to Fill Médio</td>
+                                    <td>11 dias</td>
+                                    <td>15 dias</td>
+                                    <td style="color: green;">✓ Dentro da Meta</td>
+                                </tr>
+                                <tr>
+                                    <td>Diversidade Gênero</td>
+                                    <td>81.3%</td>
+                                    <td>50%</td>
+                                    <td style="color: green;">✓ Superado</td>
+                                </tr>
+                                <tr>
+                                    <td>Inclusão PCD</td>
+                                    <td>28.1%</td>
+                                    <td>5%</td>
+                                    <td style="color: green;">✓ Superado</td>
+                                </tr>
+                                <tr>
+                                    <td>Taxa de Cancelamento</td>
+                                    <td>12.5%</td>
+                                    <td>15%</td>
+                                    <td style="color: green;">✓ Dentro do esperado</td>
+                                </tr>
+                                <tr>
+                                    <td>Processos Congelados</td>
+                                    <td>12.5%</td>
+                                    <td>10%</td>
+                                    <td style="color: orange;">⚠ Atenção</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Funil de Recrutamento</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Etapa</th>
+                                    <th>Quantidade</th>
+                                    <th>Taxa de Conversão</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Candidatos Inscritos</td>
+                                    <td>2,853</td>
+                                    <td>100%</td>
+                                </tr>
+                                <tr>
+                                    <td>Candidatos Apresentados</td>
+                                    <td>410</td>
+                                    <td>14.4%</td>
+                                </tr>
+                                <tr>
+                                    <td>Entrevistados pelo Gestor</td>
+                                    <td>73</td>
+                                    <td>17.8%</td>
+                                </tr>
+                                <tr>
+                                    <td>Contratações</td>
+                                    <td>93</td>
+                                    <td>127.4%*</td>
+                                </tr>
+                                <tr colspan="3">
+                                    <td style="font-size: 0.8em; font-style: italic;">
+                                        *Taxa superior a 100% indica que algumas vagas foram preenchidas por candidatos internos/indicações diretas
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
-    <p class="subhead">Atualizado em: Outubro 2025</p>
-    <p class="hint">Dica: clique em “Carregar Excel” ou deixe um arquivo em <code>/public/dados/controle-vagas.xlsx</code> para autoload.</p>
-  </header>
-
-  <!-- Dashboard -->
-  <main class="dashboard-container">
-    <section>
-      <h3 class="section-title">📊 Resumo Executivo</h3>
-      <div class="stat-grid">
-        <div class="stat"><div class="label">Total de Vagas</div><div class="value" id="kpiTotal">—</div></div>
-        <div class="stat"><div class="label">Contratações</div><div class="value" id="kpiContratadas">—</div></div>
-        <div class="stat"><div class="label">Taxa de Conversão</div><div class="value" id="kpiConversao">—</div></div>
-        <div class="stat"><div class="label">Em Andamento</div><div class="value" id="kpiAndamento">—</div></div>
-      </div>
-    </section>
-
-    <section>
-      <h3 class="section-title">📈 Volumetria dos Processos</h3>
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <h3>Status das Requisições</h3>
-          <div class="chart-container"><canvas id="statusReqChart"></canvas></div>
-          <div class="empty" id="emptyReq" style="display:none">Nenhuma coluna de “Status da Requisição” encontrada.</div>
-        </div>
-        <div class="metric-card">
-          <h3>Status dos Processos</h3>
-          <div class="chart-container"><canvas id="statusProcChart"></canvas></div>
-          <div class="empty" id="emptyProc" style="display:none">Nenhuma coluna de “Status do Processo” encontrada.</div>
-        </div>
-        <div class="metric-card">
-          <h3>Vagas por Local</h3>
-          <div class="chart-container"><canvas id="localChart"></canvas></div>
-          <div class="empty" id="emptyLocal" style="display:none">Nenhuma coluna “Local” encontrada.</div>
-        </div>
-        <div class="metric-card">
-          <h3>Perfil das Vagas</h3>
-          <div class="chart-container"><canvas id="nivelChart"></canvas></div>
-          <div class="empty" id="emptyNivel" style="display:none">Nenhuma coluna “Nível/Senioridade” encontrada.</div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h3 class="section-title">🏢 Distribuição por Diretoria</h3>
-      <div class="metric-card">
-        <h3>Top Diretorias com Mais Vagas</h3>
-        <div class="chart-container" style="height:400px"><canvas id="diretoriaChart"></canvas></div>
-        <div class="empty" id="emptyDir" style="display:none">Nenhuma coluna “Diretoria/BU/Área” encontrada.</div>
-      </div>
-    </section>
-
-    <section>
-      <h3 class="section-title">🌈 Diversidade e Inclusão</h3>
-      <div class="metric-card">
-        <h3>Indicadores de Diversidade nas Contratações</h3>
-        <div class="diversity-indicators" id="diversityBadges">
-          <div class="diversity-item"><div class="diversity-badge">♀</div><div class="diversity-text"><div class="val" id="divMulheres">—</div><div class="lbl">Mulheres</div><div class="note" id="divMulheresPct">—</div></div></div>
-          <div class="diversity-item"><div class="diversity-badge">🤝</div><div class="diversity-text"><div class="val" id="divRaca">—</div><div class="lbl">Raça</div><div class="note" id="divRacaPct">—</div></div></div>
-          <div class="diversity-item"><div class="diversity-badge">♿</div><div class="diversity-text"><div class="val" id="divPCD">—</div><div class="lbl">PCD</div><div class="note" id="divPCDPct">—</div></div></div>
-          <div class="diversity-item"><div class="diversity-badge">50+</div><div class="diversity-text"><div class="val" id="div50">—</div><div class="lbl">Faixa Etária</div><div class="note" id="div50Pct">—</div></div></div>
-        </div>
-        <div class="chart-container" style="height:320px;margin-top:18px"><canvas id="diversityChart"></canvas></div>
-      </div>
-    </section>
-
-    <section>
-      <h3 class="section-title">📋 Análise Detalhada</h3>
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <h3>Taxa de Aprovação por Status</h3>
-          <div class="table-container">
-            <table id="tblAprov">
-              <thead><tr><th>Status</th><th>Quantidade</th><th>Percentual</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="metric-card">
-          <h3>Principais Métricas de Performance</h3>
-          <div class="table-container">
-            <table>
-              <thead><tr><th>Métrica</th><th>Valor</th><th>Meta</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr><td>Taxa de Conversão</td><td id="mConv">—</td><td>70%</td><td id="mConvSt">—</td></tr>
-                <tr><td>Diversidade Gênero</td><td id="mGen">—</td><td>30%</td><td id="mGenSt">—</td></tr>
-                <tr><td>Inclusão PCD</td><td id="mPCD">—</td><td>5%</td><td id="mPCDSt">—</td></tr>
-                <tr><td>Taxa de Cancelamento</td><td id="mCanc">—</td><td>15%</td><td id="mCancSt">—</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    // === Chart.js defaults ===
-    Chart.defaults.font.family = "'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
-    Chart.defaults.plugins.legend.labels.usePointStyle = true;
-    Chart.defaults.plugins.legend.labels.boxWidth = 10;
-
-    const palette = {
-      violet600:"#7c3aed", violet500:"#8b5cf6", violet300:"#c4b5fd",
-      gray600:"#4b5563", gray300:"#d1d5db",
-      green:"#16a34a", amber:"#f59e0b", red:"#ef4444"
-    };
-
-    // =======================
-    // Util: normalização texto
-    // =======================
-    const normalize = s => (s||"")
-      .toString()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // remove acentos
-      .replace(/\s+/g," ")
-      .trim()
-      .toLowerCase();
-
-    // Aliases de colunas (ajustados pra sua planilha)
-    const COLS = {
-      statusRequisicao: [
-        "status requisicao","status da requisicao","status req","status requisic","status requisição","status da requisição"
-      ],
-      statusProcesso: [
-        "status processo","status do processo","status proc"
-      ],
-      local: ["local","localidade","cidade","site"],
-      nivel: ["nivel","nível","senioridade","perfil da vaga","perfil"],
-      diretoria: ["diretoria","bu","area","área","departamento","unidade","unidade de negocio","unidade de negócio"],
-      divMulher: ["mulheres","genero","gênero","sexo feminino","feminino"],
-      divRaca: ["raca","raça","cor","negros/pardos","etnia"],
-      divPCD: ["pcd","deficiencia","deficiência","inclui pcd","cota pcd"],
-      div50: ["50+","faixa etaria","faixa etária","idade","idade 50+"]
-    };
-
-    // Detecta a linha de cabeçalho (olha primeiras 30 linhas)
-    function detectHeaderRow(rows){
-      let bestRow = -1, bestScore = -1;
-      for(let r=0; r<Math.min(rows.length, 30); r++){
-        const cells = rows[r].map(c => normalize(c));
-        let score = 0;
-        const allTargets = [
-          ...COLS.statusRequisicao, ...COLS.statusProcesso,
-          ...COLS.local, ...COLS.nivel, ...COLS.diretoria
-        ];
-        for(const t of allTargets){
-          if(cells.some(c => c.includes(t))) score++;
-        }
-        if(score > bestScore){ bestScore = score; bestRow = r; }
-      }
-      return bestRow;
-    }
-
-    // Mapa {chave canonica -> índice da coluna}
-    function buildHeaderMap(headerRow){
-      const map = {};
-      headerRow.forEach((raw, idx) => {
-        const h = normalize(raw);
-        for(const [key, aliases] of Object.entries(COLS)){
-          for(const a of aliases){
-            if(h.includes(a)){ map[key] = idx; break; }
-          }
-          if(map[key] !== undefined) break;
-        }
-      });
-      return map;
-    }
-
-    // Lê TODAS as sheets
-    function readWorkbookAllSheets(wb){
-      const all = [];
-      for(const name of wb.SheetNames){
-        const ws = wb.Sheets[name];
-        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
-        if(!rows.length) continue;
-
-        const headerIdx = detectHeaderRow(rows);
-        if(headerIdx < 0) continue;
-
-        const header = rows[headerIdx];
-        const map = buildHeaderMap(header);
-
-        const hasAny =
-          map.statusRequisicao !== undefined ||
-          map.statusProcesso   !== undefined ||
-          map.local            !== undefined ||
-          map.nivel            !== undefined ||
-          map.diretoria        !== undefined;
-
-        if(!hasAny) continue;
-
-        for(let r = headerIdx+1; r < rows.length; r++){
-          const row = rows[r] || [];
-          all.push({
-            statusRequisicao: map.statusRequisicao!==undefined ? row[map.statusRequisicao] : "",
-            statusProcesso:   map.statusProcesso!==undefined   ? row[map.statusProcesso]   : "",
-            local:            map.local!==undefined            ? row[map.local]            : "",
-            nivel:            map.nivel!==undefined            ? row[map.nivel]            : "",
-            diretoria:        map.diretoria!==undefined        ? row[map.diretoria]        : "",
-            divMulher:        map.divMulher!==undefined        ? row[map.divMulher]        : "",
-            divRaca:          map.divRaca!==undefined          ? row[map.divRaca]          : "",
-            divPCD:           map.divPCD!==undefined           ? row[map.divPCD]           : "",
-            div50:            map.div50!==undefined            ? row[map.div50]            : ""
-          });
-        }
-      }
-      return all;
-    }
-
-    // Agrupador simples
-    function countBy(items, getter){
-      const m = new Map();
-      for(const it of items){
-        const k = normalize(getter(it));
-        if(!k) continue;
-        m.set(k, (m.get(k)||0)+1);
-      }
-      const obj = {};
-      for(const [k,v] of m.entries()){
-        const pretty = k.replace(/\b\w/g, c => c.toUpperCase());
-        obj[pretty] = v;
-      }
-      return obj;
-    }
-
-    function updateKPIs(all, procCounts){
-      const total = all.length;
-      const contratadas = (procCounts["Contratada"]||procCounts["Contratado"]||0);
-      const emProc = (procCounts["Em Processo"]||0);
-      const canceladas = (procCounts["Cancelada"]||0);
-
-      const conversao = total ? (contratadas/total*100) : 0;
-      const cancelPct = total ? (canceladas/total*100) : 0;
-
-      kpiTotal.textContent = total.toString();
-      kpiContratadas.textContent = contratadas.toString();
-      kpiConversao.textContent = total? `${conversao.toFixed(1)}%` : "—";
-      kpiAndamento.textContent = emProc.toString();
-
-      const tbody = document.querySelector("#tblAprov tbody");
-      tbody.innerHTML = "";
-      const sum = Object.values(procCounts).reduce((a,b)=>a+b,0);
-      Object.entries(procCounts).sort((a,b)=>b[1]-a[1]).forEach(([st,qty])=>{
-        const pct = sum? ((qty/sum)*100).toFixed(1) : "0.0";
-        tbody.insertAdjacentHTML("beforeend", `<tr><td>${st}</td><td>${qty}</td><td>${pct}%</td></tr>`);
-      });
-
-      mConv.textContent = total? `${conversao.toFixed(1)}%` : "—";
-      mConvSt.textContent = conversao >= 70 ? "✓ Atingido" : "⚠ Em progresso";
-      mConvSt.style.color = conversao >= 70 ? "var(--good)" : "var(--warn)";
-
-      mCanc.textContent = total? `${cancelPct.toFixed(1)}%` : "—";
-      mCancSt.textContent = cancelPct <= 15 ? "✓ Dentro do esperado" : "✗ Acima do esperado";
-      mCancSt.style.color = cancelPct <= 15 ? "var(--good)" : "var(--bad)";
-    }
-
-    function updateDiversity(all){
-      const total = all.length || 0;
-      const getNum = key => {
-        const vals = all.map(r => r[key]).filter(v => v!=="" && !isNaN(Number(v)));
-        return vals.length ? Math.max(...vals.map(Number)) : 0;
-      };
-      const mulheres = getNum("divMulher");
-      const raca = getNum("divRaca");
-      const pcd = getNum("divPCD");
-      const mais50 = getNum("div50");
-
-      const set = (idVal, idPct, n) => {
-        document.getElementById(idVal).textContent = n || "—";
-        document.getElementById(idPct).textContent = total? `${((n/total)*100).toFixed(1)}% do total` : "—";
-      };
-      set("divMulheres","divMulheresPct", mulheres);
-      set("divRaca","divRacaPct", raca);
-      set("divPCD","divPCDPct", pcd);
-      set("div50","div50Pct", mais50);
-
-      const ctx = document.getElementById("diversityChart").getContext("2d");
-      if(window._divChart) window._divChart.destroy();
-      window._divChart = new Chart(ctx, {
-        type:"bar",
-        data:{
-          labels:["Mulheres","Raça","PCD","50+"],
-          datasets:[
-            {label:"Contratações", data:[mulheres,raca,pcd,mais50], backgroundColor:[palette.violet600,palette.violet500,palette.red,palette.amber], borderRadius:8},
-            {label:"Meta", data:[30,20,5,10], backgroundColor:"rgba(15,23,42,.12)", borderRadius:8}
-          ]
-        },
-        options:{
-          responsive:true, maintainAspectRatio:false,
-          scales:{ y:{ beginAtZero:true, ticks:{stepSize:5}, grid:{color:"rgba(255,255,255,.06)"} }, x:{ grid:{display:false} } },
-          plugins:{ legend:{ position:"bottom" } }
-        }
-      });
-
-      const g = mulheres && total? (mulheres/total*100):null;
-      mGen.textContent = g!=null? `${g.toFixed(1)}%`:"—";
-      mGenSt.textContent = g!=null ? (g>=30?"✓ Atingido":"⚠ Em progresso") : "—";
-      mGenSt.style.color = g!=null ? (g>=30?"var(--good)":"var(--warn)") : "var(--muted)";
-
-      const p = pcd && total? (pcd/total*100):0;
-      mPCD.textContent = total? `${p.toFixed(1)}%`:"—";
-      mPCDSt.textContent = total? (p>=5?"✓ Atingido":"✗ Abaixo da meta"):"—";
-      mPCDSt.style.color = total? (p>=5?"var(--good)":"var(--bad)"):"var(--muted)";
-    }
-
-    function renderCharts(reqCounts, procCounts, localCounts, nivelCounts, dirCounts){
-      emptyReq.style.display   = Object.keys(reqCounts).length ? "none" : "block";
-      emptyProc.style.display  = Object.keys(procCounts).length ? "none" : "block";
-      emptyLocal.style.display = Object.keys(localCounts).length ? "none" : "block";
-      emptyNivel.style.display = Object.keys(nivelCounts).length ? "none" : "block";
-      emptyDir.style.display   = Object.keys(dirCounts).length ? "none" : "block";
-
-      const ringColors=[palette.violet600,palette.violet500,palette.violet300, palette.gray300, palette.gray600];
-      if(window._req) window._req.destroy();
-      window._req=new Chart(statusReqChart.getContext('2d'),{
-        type:'doughnut',
-        data:{labels:Object.keys(reqCounts), datasets:[{data:Object.values(reqCounts), backgroundColor:ringColors, borderColor:"#fff", borderWidth:2, hoverOffset:6}]},
-        options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:12}}}}}
-      });
-
-      if(window._proc) window._proc.destroy();
-      window._proc=new Chart(statusProcChart.getContext('2d'),{
-        type:'pie',
-        data:{labels:Object.keys(procCounts), datasets:[{data:Object.values(procCounts), backgroundColor:[palette.violet600,palette.violet500,palette.violet300,palette.gray600,palette.gray300], borderColor:"#fff", borderWidth:2}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:12}}}}}
-      });
-
-      if(window._local) window._local.destroy();
-      window._local=new Chart(localChart.getContext('2d'),{
-        type:'bar',
-        data:{labels:Object.keys(localCounts), datasets:[{label:'Quantidade de Vagas', data:Object.values(localCounts), backgroundColor:palette.violet600, borderRadius:8}]},
-        options:{responsive:true,maintainAspectRatio:false,scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:10},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}}
-      });
-
-      if(window._nivel) window._nivel.destroy();
-      window._nivel=new Chart(nivelChart.getContext('2d'),{
-        type:'polarArea',
-        data:{labels:Object.keys(nivelCounts), datasets:[{data:Object.values(nivelCounts), backgroundColor:['#7c3aeddd','#8b5cf6dd','#c4b5fddd','#9ca3afdd','#cbd5e1dd','#6b7280dd','#a78bfa','#6366f1','#60a5fadd'], borderColor:'rgba(255,255,255,.9)', borderWidth:2}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11}}}},scales:{r:{grid:{color:'rgba(255,255,255,.06)'}}}}
-      });
-
-      if(window._dir) window._dir.destroy();
-      const dirEntries = Object.entries(dirCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
-      window._dir=new Chart(diretoriaChart.getContext('2d'),{
-        type:'bar',
-        data:{labels:dirEntries.map(d=>d[0]), datasets:[{label:'Número de Vagas', data:dirEntries.map(d=>d[1]), backgroundColor:dirEntries.map((_,i)=> i%2? palette.violet600:palette.violet500), borderRadius:8}]},
-        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{y:{grid:{display:false}},x:{beginAtZero:true,ticks:{stepSize:5},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}}
-      });
-    }
-
-    // === Upload manual ===
-    xlsxInput.addEventListener("change", async ev=>{
-      const f = ev.target.files?.[0];
-      if(!f) return;
-      const ab = await f.arrayBuffer();
-      await parseArrayBuffer(ab);
-    });
-
-    // === Autoload do /public (ajuste o nome do arquivo) ===
-    const AUTOLOAD_XLSX_URL = "/dados/controle-vagas.xlsx"; // coloque sua planilha aqui
-
-    async function parseArrayBuffer(ab){
-      const wb = XLSX.read(ab, { type: "array" });
-      const all = readWorkbookAllSheets(wb);
-      const reqCounts   = countBy(all, r => r.statusRequisicao);
-      const procCounts  = countBy(all, r => r.statusProcesso);
-      const localCounts = countBy(all, r => r.local);
-      const nivelCounts = countBy(all, r => r.nivel);
-      const dirCounts   = countBy(all, r => r.diretoria);
-      updateKPIs(all, procCounts);
-      updateDiversity(all);
-      renderCharts(reqCounts, procCounts, localCounts, nivelCounts, dirCounts);
-    }
-
-    async function autoload(){
-      try{
-        if(!AUTOLOAD_XLSX_URL) return;
-        const res = await fetch(AUTOLOAD_XLSX_URL, { cache: "no-cache" });
-        if(!res.ok) throw new Error("Falha ao baixar XLSX: "+res.status);
-        const ab = await res.arrayBuffer();
-        await parseArrayBuffer(ab);
-      }catch(e){
-        console.warn("Autoload falhou (use o botão Carregar Excel):", e);
-        renderCharts({}, {}, {}, {}, {});
-      }
-    }
-
-    // Inicialização
-    (async ()=>{ await autoload(); })();
-  </script>
+    
+    <script>
+        // Configuração global do Chart.js
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        
+        // Dados reais extraídos do Excel
+        const dadosReais = {
+            statusRequisicao: {
+                'Preenchida': 68,
+                'Aprovada': 56,
+                'Cancelada': 4
+            },
+            statusProcesso: {
+                'Contratada': 93,
+                'Congelada': 16,
+                'Cancelada': 16,
+                'Declínio de carta oferta': 2,
+                'Em Processo': 1
+            },
+            local: {
+                'Escritório': 72,
+                'Campo': 29,
+                'BIC': 13,
+                'Fábrica': 12,
+                'Não especificado': 2
+            },
+            nivel: {
+                'Estágio': 41,
+                'Analista': 27,
+                'Vendas': 19,
+                'Gerencial': 12,
+                'Especialista': 10,
+                'Jovem Aprendiz': 10,
+                'Supervisão/Coordenação': 6,
+                'Demais vagas': 1,
+                'Não especificado': 2
+            },
+            diretoria: {
+                'Desenvolvimento Comercial': 26,
+                'Marketing': 20,
+                'BIC': 15,
+                'Vendas': 10,
+                'Financeiro': 9,
+                'Industrial': 9,
+                'Logística': 8,
+                'RH': 7,
+                'Comercial': 5,
+                'Fábrica': 3,
+                'Supply Chain': 3,
+                'Projetos e Dados': 2,
+                'Assuntos Regulatórios': 2,
+                'Médica': 1,
+                'Jurídico': 1,
+                'Inteligência': 1,
+                'QRIVI': 1,
+                'Compliance': 1,
+                'Não especificado': 3
+            },
+            canais: {
+                'Workday': 70,
+                'Indicação Interna': 65,
+                'LinkedIn': 57,
+                'Candidato Interno': 37
+            },
+            diversidade: {
+                'Mulheres': 104,
+                'Negros/Pardos': 70,
+                'PCD': 36,
+                '50+': 45
+            },
+            universidades: {
+                'UFRJ': 12,
+                'IBMR': 6,
+                'Celso Lisboa': 4,
+                'UFRRJ': 4,
+                'UERJ': 4,
+                'IBMEC': 3,
+                'UVA': 3,
+                'PUC': 2,
+                'Estácio de Sá': 3,
+                'Outras': 45
+            },
+            satisfacao: {
+                'Candidatos': 64,
+                'Candidatos Selecionados': 23,
+                'Gestores': 23
+            },
+            recrutadores: {
+                'Caroline': 72,
+                'Fabiana': 56
+            }
+        };
+        
+        // Paleta de cores profissional
+        const colors = {
+            primary: ['#005a87', '#0084c7', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff'],
+            secondary: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f', '#d3f261', '#eaff8f'],
+            tertiary: ['#fa8c16', '#ffa940', '#ffc069', '#ffd591', '#ffe7ba', '#fff1b8'],
+            danger: ['#f5222d', '#ff4d4f', '#ff7875', '#ffa39e', '#ffccc7', '#ffebef'],
+            purple: ['#722ed1', '#9254de', '#b37feb', '#d3adf7', '#efdbff', '#f9f0ff']
+        };
+        
+        // 1. Gráfico de Status das Requisições
+        new Chart(document.getElementById('statusReqChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(dadosReais.statusRequisicao),
+                datasets: [{
+                    data: Object.values(dadosReais.statusRequisicao),
+                    backgroundColor: colors.primary.slice(0, 3),
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 2. Gráfico de Status dos Processos
+        new Chart(document.getElementById('statusProcChart'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosReais.statusProcesso),
+                datasets: [{
+                    data: Object.values(dadosReais.statusProcesso),
+                    backgroundColor: [...colors.secondary, ...colors.danger],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 12,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 3. Gráfico de Local
+        new Chart(document.getElementById('localChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dadosReais.local),
+                datasets: [{
+                    label: 'Quantidade de Vagas',
+                    data: Object.values(dadosReais.local),
+                    backgroundColor: colors.primary[1],
+                    borderColor: colors.primary[0],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            stepSize: 10,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Vagas: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 4. Gráfico de Nível
+        new Chart(document.getElementById('nivelChart'), {
+            type: 'polarArea',
+            data: {
+                labels: Object.keys(dadosReais.nivel),
+                datasets: [{
+                    data: Object.values(dadosReais.nivel),
+                    backgroundColor: colors.primary.map(c => c + '90'),
+                    borderColor: colors.primary,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: { size: 10 },
+                            padding: 10
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 5. Gráfico de Vínculo (novo)
+        const vinculoData = {
+            'CLT': 45,
+            'Estágio': 41,
+            'Jovem Aprendiz': 10,
+            'Terceirizado': 8,
+            'Temporário': 5,
+            'Outros': 19
+        };
+        
+        new Chart(document.getElementById('vinculoChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(vinculoData),
+                datasets: [{
+                    data: Object.values(vinculoData),
+                    backgroundColor: colors.tertiary,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 12,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 6. Gráfico de Diretorias
+        new Chart(document.getElementById('diretoriaChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dadosReais.diretoria),
+                datasets: [{
+                    label: 'Número de Vagas',
+                    data: Object.values(dadosReais.diretoria),
+                    backgroundColor: function(context) {
+                        const allColors = [...colors.primary, ...colors.secondary, ...colors.tertiary, ...colors.purple];
+                        return allColors[context.dataIndex % allColors.length];
+                    },
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { 
+                            stepSize: 5,
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            font: { size: 10 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+        
+        // 7. Gráfico de Canais de Recrutamento
+        new Chart(document.getElementById('canaisChart'), {
+            type: 'radar',
+            data: {
+                labels: Object.keys(dadosReais.canais),
+                datasets: [{
+                    label: 'Efetividade',
+                    data: Object.values(dadosReais.canais),
+                    backgroundColor: colors.primary[1] + '40',
+                    borderColor: colors.primary[1],
+                    borderWidth: 2,
+                    pointBackgroundColor: colors.primary[0],
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 80,
+                        ticks: {
+                            font: { size: 10 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+        
+        // 8. Gráfico de Diversidade Comparativo
+        new Chart(document.getElementById('diversityComparisonChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Mulheres', 'Negros/Pardos', 'PCD', '50+'],
+                datasets: [{
+                    label: 'Vagas com este perfil',
+                    data: [104, 70, 36, 45],
+                    backgroundColor: [colors.primary[1], colors.secondary[0], colors.tertiary[0], colors.purple[0]],
+                    borderWidth: 0
+                }, {
+                    label: 'Meta Corporativa',
+                    data: [64, 38, 6, 13],
+                    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                    borderColor: 'rgba(0, 0, 0, 0.3)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 120,
+                        ticks: { 
+                            stepSize: 20,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 9. Gráfico Time to Fill
+        new Chart(document.getElementById('timeToFillChart'), {
+            type: 'line',
+            data: {
+                labels: ['< 7 dias', '7-14 dias', '15-30 dias', '31-60 dias', '> 60 dias'],
+                datasets: [{
+                    label: 'Quantidade de Processos',
+                    data: [45, 32, 21, 12, 1],
+                    backgroundColor: colors.primary[1] + '20',
+                    borderColor: colors.primary[1],
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+        
+        // 10. Gráfico de Universidades
+        new Chart(document.getElementById('universidadesChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dadosReais.universidades),
+                datasets: [{
+                    label: 'Contratados',
+                    data: Object.values(dadosReais.universidades),
+                    backgroundColor: colors.purple,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 5,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+        
+        // 11. Gráfico de Satisfação
+        new Chart(document.getElementById('satisfacaoChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(dadosReais.satisfacao),
+                datasets: [{
+                    data: Object.values(dadosReais.satisfacao),
+                    backgroundColor: [colors.tertiary[0], colors.secondary[0], colors.primary[1]],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} respostas (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
