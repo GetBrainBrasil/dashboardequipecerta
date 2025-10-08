@@ -7,356 +7,370 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root{
+            /* Paleta do layout (NÃO afeta seus gráficos) */
+            --bg-0: #0b1220;     /* fundo base */
+            --bg-1: #0f1830;     /* fundo containers */
+            --bg-2: #111a35;     /* destaque */
+            --txt-1:#e6eefc;     /* texto principal */
+            --txt-2:#a5b2cc;     /* texto secundário */
+            --brand-1:#69c0ff;   /* acento */
+            --brand-2:#00bcd4;   /* acento 2 */
+            --ok:#52c41a;
+            --warn:#faad14;
+            --danger:#f5222d;
+
+            --card-bg: rgba(255,255,255,0.06);
+            --card-border: 1px solid rgba(255,255,255,0.15);
+            --blur: saturate(150%) blur(8px);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-1: 0 10px 30px rgba(0,0,0,0.35);
+            --shadow-2: 0 18px 50px rgba(0,0,0,0.45);
+
+            --grid-line: rgba(255,255,255,0.06);
         }
-        
-        body {
+
+        *{ margin:0; padding:0; box-sizing:border-box; }
+
+        html, body { height: 100%; }
+
+        body{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #005a87 0%, #0084c7 100%);
+            color: var(--txt-1);
             min-height: 100vh;
-            padding: 20px;
+            padding: 28px;
+            position: relative;
+            overflow-x: hidden;
+            /* Fundo em camadas: gradiente radial + textura de grid */
+            background:
+              radial-gradient(1200px 700px at 10% -10%, rgba(105,192,255,0.16), transparent 60%),
+              radial-gradient(900px 600px at 100% 0%, rgba(0,188,212,0.18), transparent 60%),
+              linear-gradient(180deg, var(--bg-0) 0%, #0c1426 60%, #0b1220 100%);
         }
-        
-        .header {
+
+        /* Grid sutil sobre o fundo */
+        body::after{
+            content:"";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(0deg, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 32px 32px, 32px 32px;
+            mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 15%, rgba(0,0,0,0.8) 50%, transparent 100%);
+            z-index: 0;
+        }
+
+        .dashboard-container{ 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            position: relative; 
+            z-index: 1;
+        }
+
+        .header{
             text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
+            margin-bottom: 36px;
+            padding: 28px;
+            border-radius: var(--radius-lg);
+            background: var(--card-bg);
+            border: var(--card-border);
+            backdrop-filter: var(--blur);
+            box-shadow: var(--shadow-1);
         }
-        
-        .header h1 {
-            font-size: 3em;
-            color: #90EE90;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            margin-bottom: 10px;
-        }
-        
-        .header h2 {
-            font-size: 1.8em;
-            font-weight: 300;
-            margin-bottom: 20px;
-        }
-        
-        .logo-container {
-            margin-bottom: 20px;
-        }
-        
-        .logo {
+
+        .logo-container{ margin-bottom: 12px; }
+
+        .logo{
             width: 200px;
             height: 80px;
-            background: white;
-            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 12px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #005a87;
-            font-size: 1.2em;
+            font-weight: 700;
+            color: #0b4c7a;
+            font-size: 1.1rem;
+            letter-spacing: .5px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-        
-        .dashboard-container {
-            max-width: 1600px;
-            margin: 0 auto;
+
+        .header h1{
+            font-size: clamp(2rem, 3.2vw, 3rem);
+            color: var(--brand-1);
+            text-shadow: 0 2px 16px rgba(105,192,255,0.25);
+            margin: 6px 0 4px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
         }
-        
-        .section-title {
-            color: white;
-            font-size: 1.8em;
-            margin: 30px 0 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
+
+        .header h2{
+            font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+            font-weight: 400;
+            color: var(--txt-2);
+            margin: 6px 0 8px;
         }
-        
-        .metrics-grid {
+
+        .header p{
+            margin-top: 6px;
+            color: var(--txt-2);
+            opacity: .9;
+            font-size: .95rem;
+        }
+
+        .section-title{
+            font-size: 1.25rem;
+            color: var(--txt-1);
+            margin: 28px 0 16px;
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+            border: var(--card-border);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metrics-grid{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 18px;
+            margin-bottom: 26px;
         }
-        
-        .metric-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
+
+        .metric-card{
+            background: var(--card-bg);
+            border: var(--card-border);
+            backdrop-filter: var(--blur);
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-1);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
         }
-        
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+
+        .metric-card:hover{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-2);
+            border-color: rgba(255,255,255,0.25);
         }
-        
-        .metric-card h3 {
-            color: #005a87;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-            border-bottom: 2px solid #0084c7;
+
+        .metric-card h3{
+            color: var(--txt-1);
+            margin-bottom: 12px;
+            font-size: 1.05rem;
             padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(255,255,255,0.18);
+            letter-spacing: .2px;
         }
-        
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-        
-        .chart-container-large {
-            height: 400px;
-        }
-        
-        .stat-grid {
+
+        .chart-container{ position: relative; height: 300px; width: 100%; }
+        .chart-container-large{ height: 400px; }
+
+        .stat-grid{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
         }
-        
-        .stat-box {
-            background: linear-gradient(135deg, #0084c7, #005a87);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
+
+        .stat-box{
+            background: linear-gradient(180deg, rgba(0,188,212,0.14), rgba(105,192,255,0.10));
+            border: 1px solid rgba(105,192,255,0.25);
+            color: var(--txt-1);
+            padding: 18px;
+            border-radius: 12px;
             text-align: center;
-            transition: transform 0.3s;
+            transition: transform .25s ease, box-shadow .25s ease;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.25);
         }
-        
-        .stat-box:hover {
-            transform: scale(1.05);
-        }
-        
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        
-        .diversity-indicators {
+        .stat-box:hover{ transform: translateY(-3px); box-shadow: var(--shadow-2); }
+
+        .stat-number{ font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+        .stat-label{ font-size: .9rem; color: var(--txt-2); }
+
+        .diversity-indicators{
             display: flex;
             justify-content: space-around;
             flex-wrap: wrap;
-            gap: 20px;
-            padding: 20px;
+            gap: 18px;
+            padding: 10px 6px 4px;
         }
-        
-        .diversity-item {
-            text-align: center;
-            flex: 1;
-            min-width: 120px;
-        }
-        
-        .diversity-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 10px;
-            background: linear-gradient(135deg, #0084c7, #005a87);
+        .diversity-item{ text-align: center; flex:1; min-width: 140px; }
+
+        .diversity-icon{
+            width: 64px; height: 64px; margin: 0 auto 8px;
+            background: linear-gradient(180deg, rgba(0,188,212,0.25), rgba(105,192,255,0.25));
+            border: 1px solid rgba(255,255,255,0.25);
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--txt-1); font-size: 22px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
         }
-        
-        .diversity-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #005a87;
-            margin: 10px 0 5px;
-        }
-        
-        .diversity-label {
-            font-size: 0.9em;
-            color: #666;
-        }
-        
-        .diversity-percentage {
-            color: #0084c7;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-        
-        table {
+
+        .diversity-value{ font-size: 1.6rem; font-weight: 800; color: var(--brand-1); margin: 6px 0 2px; }
+        .diversity-label{ font-size: .85rem; color: var(--txt-2); letter-spacing: .6px; }
+        .diversity-percentage{ color: var(--brand-2); font-size: .85rem; margin-top: 6px; }
+
+        .table-container{ overflow-x: auto; margin-top: 12px; }
+
+        table{
             width: 100%;
             border-collapse: collapse;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.03);
         }
-        
-        th, td {
-            padding: 12px;
+
+        th, td{
+            padding: 12px 14px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px dashed rgba(255,255,255,0.08);
+            color: var(--txt-1);
         }
-        
-        th {
-            background: #005a87;
-            color: white;
+
+        th{
+            background: linear-gradient(180deg, rgba(105,192,255,0.18), rgba(0,188,212,0.12));
+            color: var(--txt-1);
             font-weight: 600;
+            letter-spacing: .2px;
         }
-        
-        tr:hover {
-            background: #f5f5f5;
+
+        tr:hover{ background: rgba(255,255,255,0.04); }
+
+        .legend{ 
+            display:flex; justify-content:center; flex-wrap:wrap; gap:18px; margin-top: 14px; 
         }
-        
-        .legend {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-        }
-        
-        .kpi-card {
-            background: linear-gradient(135deg, #52c41a, #73d13d);
-            color: white;
-            padding: 15px;
+        .legend-item{ display:flex; align-items:center; gap:8px; color: var(--txt-1); }
+        .legend-color{ width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.25); }
+
+        .kpi-card{
+            background: linear-gradient(180deg, rgba(82,196,26,0.18), rgba(115,209,61,0.16));
+            color: var(--txt-1);
+            padding: 12px 14px;
             border-radius: 10px;
-            margin: 10px 0;
+            border: 1px solid rgba(82,196,26,0.35);
+            margin: 8px 0;
         }
-        
-        .kpi-card.warning {
-            background: linear-gradient(135deg, #faad14, #ffc53d);
+        .kpi-card.warning{
+            background: linear-gradient(180deg, rgba(250,173,20,0.18), rgba(255,197,61,0.16));
+            border-color: rgba(250,173,20,0.35);
         }
-        
-        .kpi-card.danger {
-            background: linear-gradient(135deg, #f5222d, #ff7875);
+        .kpi-card.danger{
+            background: linear-gradient(180deg, rgba(245,34,45,0.18), rgba(255,120,117,0.16));
+            border-color: rgba(245,34,45,0.35);
         }
-        
-        .recruiter-badge {
-            display: inline-block;
-            background: #0084c7;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            margin: 5px;
-            font-size: 0.9em;
+
+        .recruiter-badge{
+            display:inline-block;
+            background: linear-gradient(180deg, rgba(105,192,255,0.22), rgba(0,188,212,0.18));
+            color: var(--txt-1);
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(105,192,255,0.35);
+            margin: 6px;
+            font-size: .95rem;
         }
-        
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            
-            .metric-card {
-                break-inside: avoid;
-            }
-            
-            .header {
-                background: none;
-                color: #005a87;
-            }
-            
-            .header h1 {
-                color: #005a87;
-            }
-            
-            .section-title {
-                color: #005a87;
-                background: #f0f0f0;
-            }
+
+        .full-width{ grid-column: 1 / -1; }
+
+        .timeline-container{
+            padding: 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            margin: 10px 0 4px;
         }
-        
-        .print-button {
+        .timeline-item{
+            display:flex; align-items:center;
+            padding: 10px 12px;
+            border-left: 3px solid var(--brand-2);
+            margin-left: 10px;
+            position: relative;
+            color: var(--txt-1);
+        }
+        .timeline-item::before{
+            content:"";
+            position:absolute; left: -8px;
+            width: 12px; height: 12px; border-radius:50%;
+            background: var(--brand-2);
+            box-shadow: 0 0 0 4px rgba(0,188,212,0.15);
+        }
+
+        .print-button{
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            color: #005a87;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 16px;
+            top: 20px; right: 20px;
+            background: rgba(255,255,255,0.9);
+            color: #0b4c7a;
+            border: 1px solid rgba(11,76,122,0.25);
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-size: 15px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            transition: transform .2s ease, box-shadow .2s ease;
             z-index: 1000;
         }
-        
-        .print-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        .print-button:hover{ transform: translateY(-2px); box-shadow: var(--shadow-2); }
+
+        @media (max-width: 640px){
+            body{ padding: 18px; }
+            .header{ padding: 20px; }
         }
-        
-        @media print {
-            .print-button {
-                display: none;
+
+        @media print{
+            body{
+                background: #ffffff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                padding: 0;
+                color: #111;
             }
-        }
-        
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        
-        .timeline-container {
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        
-        .timeline-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-left: 3px solid #0084c7;
-            margin-left: 20px;
-            position: relative;
-        }
-        
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            width: 13px;
-            height: 13px;
-            border-radius: 50%;
-            background: #0084c7;
+            .header{
+                background: #ffffff !important;
+                border: none;
+                box-shadow: none;
+                color: #111;
+            }
+            .header h1{ color: #0b4c7a !important; text-shadow: none; }
+            .header h2, .header p{ color: #333 !important; }
+            .section-title{
+                color: #0b4c7a !important;
+                background: #f0f4f8 !important;
+                border: 1px solid #d9e2ec !important;
+            }
+            .metric-card{
+                background: #ffffff !important;
+                border: 1px solid #e6e6e6 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+            .stat-box{
+                background: #f7fbff !important;
+                border: 1px solid #d6e4ff !important;
+                color: #111 !important;
+            }
+            .print-button{ display: none !important; }
+            table, th, td{ color: #111 !important; border-color: #e6e6e6 !important; }
         }
     </style>
 </head>
 <body>
     <button class="print-button" onclick="window.print()">📄 Exportar PDF</button>
-    
+
     <div class="header">
         <div class="logo-container">
-            <div class="logo">
-                Pierre Fabre
-            </div>
+            <div class="logo">Pierre Fabre</div>
         </div>
         <h1>Indicadores A&S</h1>
         <h2>Dashboard Completo de Processos Seletivos - 2025</h2>
         <p style="margin-top: 10px; opacity: 0.9;">Última atualização: 07 de Outubro de 2025</p>
     </div>
-    
+
     <div class="dashboard-container">
         <!-- Resumo Executivo -->
         <section>
@@ -396,46 +410,36 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Volumetria dos Processos -->
         <section>
             <h2 class="section-title">📈 Análise de Volumetria dos Processos</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <h3>Status das Requisições</h3>
-                    <div class="chart-container">
-                        <canvas id="statusReqChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="statusReqChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Status dos Processos</h3>
-                    <div class="chart-container">
-                        <canvas id="statusProcChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="statusProcChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Distribuição por Local</h3>
-                    <div class="chart-container">
-                        <canvas id="localChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="localChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Perfil das Vagas por Nível</h3>
-                    <div class="chart-container">
-                        <canvas id="nivelChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="nivelChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Tipo de Vínculo</h3>
-                    <div class="chart-container">
-                        <canvas id="vinculoChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="vinculoChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Performance dos Recrutadores</h3>
                     <div style="padding: 20px; text-align: center;">
@@ -443,35 +447,31 @@
                             <span class="recruiter-badge" style="font-size: 1.2em;">Caroline: 72 vagas (56.3%)</span>
                         </div>
                         <div style="margin: 20px 0;">
-                            <span class="recruiter-badge" style="background: #52c41a;">Fabiana: 56 vagas (43.7%)</span>
+                            <span class="recruiter-badge" style="background: linear-gradient(180deg, rgba(82,196,26,0.22), rgba(115,209,61,0.18)); border:1px solid rgba(82,196,26,0.35);">Fabiana: 56 vagas (43.7%)</span>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <!-- Distribuição por Área -->
         <section>
             <h2 class="section-title">🏢 Análise por Diretoria e Setor</h2>
             <div class="metric-card full-width">
                 <h3>Distribuição de Vagas por Diretoria</h3>
-                <div class="chart-container chart-container-large">
-                    <canvas id="diretoriaChart"></canvas>
-                </div>
+                <div class="chart-container chart-container-large"><canvas id="diretoriaChart"></canvas></div>
             </div>
         </section>
-        
+
         <!-- Canais de Recrutamento -->
         <section>
             <h2 class="section-title">🔍 Canais de Recrutamento e Fontes</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <h3>Efetividade dos Canais</h3>
-                    <div class="chart-container">
-                        <canvas id="canaisChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="canaisChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Métricas de Candidatos por Canal</h3>
                     <div class="table-container">
@@ -489,25 +489,25 @@
                                     <td>Workday</td>
                                     <td>70</td>
                                     <td>54.7%</td>
-                                    <td style="color: green;">Alta</td>
+                                    <td style="color: #68d67f;">Alta</td>
                                 </tr>
                                 <tr>
                                     <td>Indicação Interna</td>
                                     <td>65</td>
                                     <td>50.8%</td>
-                                    <td style="color: green;">Alta</td>
+                                    <td style="color: #68d67f;">Alta</td>
                                 </tr>
                                 <tr>
                                     <td>LinkedIn</td>
                                     <td>57</td>
                                     <td>44.5%</td>
-                                    <td style="color: orange;">Média</td>
+                                    <td style="color: #ffb74d;">Média</td>
                                 </tr>
                                 <tr>
                                     <td>Candidato Interno</td>
                                     <td>37</td>
                                     <td>28.9%</td>
-                                    <td style="color: green;">Alta</td>
+                                    <td style="color: #68d67f;">Alta</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -515,7 +515,7 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Diversidade e Inclusão -->
         <section>
             <h2 class="section-title">🌈 Diversidade, Equidade e Inclusão (DE&I)</h2>
@@ -547,104 +547,77 @@
                         <div class="diversity-percentage">35.2% das vagas</div>
                     </div>
                 </div>
-                
-                <div class="chart-container" style="height: 350px; margin-top: 30px;">
+                <div class="chart-container" style="height: 350px; margin-top: 24px;">
                     <canvas id="diversityComparisonChart"></canvas>
                 </div>
             </div>
         </section>
-        
+
         <!-- Time to Fill e SLA -->
         <section>
             <h2 class="section-title">⏱️ Métricas de Tempo e SLA</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <h3>Time to Fill - Distribuição</h3>
-                    <div class="kpi-card">
-                        <strong>Tempo Médio:</strong> 11 dias
-                    </div>
-                    <div class="kpi-card warning">
-                        <strong>Tempo Máximo:</strong> 278 dias
-                    </div>
-                    <div class="kpi-card" style="background: linear-gradient(135deg, #1890ff, #40a9ff);">
+                    <div class="kpi-card"><strong>Tempo Médio:</strong> 11 dias</div>
+                    <div class="kpi-card warning"><strong>Tempo Máximo:</strong> 278 dias</div>
+                    <div class="kpi-card" style="background: linear-gradient(180deg, rgba(24,144,255,0.18), rgba(64,169,255,0.16)); border:1px solid rgba(24,144,255,0.35);">
                         <strong>Tempo Mínimo:</strong> 1 dia
                     </div>
-                    <div style="margin-top: 20px;">
+                    <div style="margin-top: 16px;">
                         <canvas id="timeToFillChart"></canvas>
                     </div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>SLA por Etapa do Processo</h3>
                     <div class="timeline-container">
-                        <div class="timeline-item">
-                            <span><strong>Alinhamento:</strong> 1-2 dias</span>
-                        </div>
-                        <div class="timeline-item">
-                            <span><strong>Divulgação:</strong> 1 dia</span>
-                        </div>
-                        <div class="timeline-item">
-                            <span><strong>Shortlist:</strong> 3-5 dias</span>
-                        </div>
-                        <div class="timeline-item">
-                            <span><strong>Entrevista Gestor:</strong> 5-7 dias</span>
-                        </div>
-                        <div class="timeline-item">
-                            <span><strong>Carta Oferta:</strong> 1-2 dias</span>
-                        </div>
-                        <div class="timeline-item">
-                            <span><strong>Admissão:</strong> 3-5 dias</span>
-                        </div>
+                        <div class="timeline-item"><span><strong>Alinhamento:</strong> 1-2 dias</span></div>
+                        <div class="timeline-item"><span><strong>Divulgação:</strong> 1 dia</span></div>
+                        <div class="timeline-item"><span><strong>Shortlist:</strong> 3-5 dias</span></div>
+                        <div class="timeline-item"><span><strong>Entrevista Gestor:</strong> 5-7 dias</span></div>
+                        <div class="timeline-item"><span><strong>Carta Oferta:</strong> 1-2 dias</span></div>
+                        <div class="timeline-item"><span><strong>Admissão:</strong> 3-5 dias</span></div>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <!-- Universidades e Formação -->
         <section>
             <h2 class="section-title">🎓 Análise de Universidades e Formação</h2>
             <div class="metric-card full-width">
                 <h3>Top 10 Universidades dos Contratados</h3>
-                <div class="chart-container chart-container-large">
-                    <canvas id="universidadesChart"></canvas>
-                </div>
+                <div class="chart-container chart-container-large"><canvas id="universidadesChart"></canvas></div>
             </div>
         </section>
-        
+
         <!-- Pesquisa de Satisfação -->
         <section>
             <h2 class="section-title">😊 Pesquisa de Satisfação</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <h3>Respondentes por Tipo</h3>
-                    <div class="chart-container">
-                        <canvas id="satisfacaoChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="satisfacaoChart"></canvas></div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Taxa de Resposta</h3>
-                    <div style="text-align: center; padding: 20px;">
-                        <div style="font-size: 4em; color: #52c41a; font-weight: bold;">86%</div>
-                        <div style="font-size: 1.2em; color: #666; margin-top: 10px;">
+                    <div style="text-align: center; padding: 16px;">
+                        <div style="font-size: 3.5em; color: var(--ok); font-weight: bold;">86%</div>
+                        <div style="font-size: 1.05em; color: var(--txt-2); margin-top: 8px;">
                             110 respostas de 128 processos
                         </div>
-                        <div style="margin-top: 20px;">
-                            <div class="kpi-card">
-                                <strong>Gestores:</strong> 23 respostas
-                            </div>
-                            <div class="kpi-card">
-                                <strong>Candidatos Selecionados:</strong> 23 respostas
-                            </div>
-                            <div class="kpi-card warning">
-                                <strong>Candidatos Gerais:</strong> 64 respostas
-                            </div>
+                        <div style="margin-top: 16px;">
+                            <div class="kpi-card"><strong>Gestores:</strong> 23 respostas</div>
+                            <div class="kpi-card"><strong>Candidatos Selecionados:</strong> 23 respostas</div>
+                            <div class="kpi-card warning"><strong>Candidatos Gerais:</strong> 64 respostas</div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <!-- Análise Detalhada e KPIs -->
         <section>
             <h2 class="section-title">📋 KPIs e Métricas de Performance</h2>
@@ -666,43 +639,43 @@
                                     <td>Taxa de Conversão</td>
                                     <td>72.7%</td>
                                     <td>70%</td>
-                                    <td style="color: green;">✓ Superado</td>
+                                    <td style="color: #68d67f;">✓ Superado</td>
                                 </tr>
                                 <tr>
                                     <td>Time to Fill Médio</td>
                                     <td>11 dias</td>
                                     <td>15 dias</td>
-                                    <td style="color: green;">✓ Dentro da Meta</td>
+                                    <td style="color: #68d67f;">✓ Dentro da Meta</td>
                                 </tr>
                                 <tr>
                                     <td>Diversidade Gênero</td>
                                     <td>81.3%</td>
                                     <td>50%</td>
-                                    <td style="color: green;">✓ Superado</td>
+                                    <td style="color: #68d67f;">✓ Superado</td>
                                 </tr>
                                 <tr>
                                     <td>Inclusão PCD</td>
                                     <td>28.1%</td>
                                     <td>5%</td>
-                                    <td style="color: green;">✓ Superado</td>
+                                    <td style="color: #68d67f;">✓ Superado</td>
                                 </tr>
                                 <tr>
                                     <td>Taxa de Cancelamento</td>
                                     <td>12.5%</td>
                                     <td>15%</td>
-                                    <td style="color: green;">✓ Dentro do esperado</td>
+                                    <td style="color: #68d67f;">✓ Dentro do esperado</td>
                                 </tr>
                                 <tr>
                                     <td>Processos Congelados</td>
                                     <td>12.5%</td>
                                     <td>10%</td>
-                                    <td style="color: orange;">⚠ Atenção</td>
+                                    <td style="color: #ffb74d;">⚠ Atenção</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                
+
                 <div class="metric-card">
                     <h3>Funil de Recrutamento</h3>
                     <div class="table-container">
@@ -747,11 +720,11 @@
             </div>
         </section>
     </div>
-    
+
     <script>
         // Configuração global do Chart.js
         Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-        
+
         // Dados reais extraídos do Excel
         const dadosReais = {
             statusRequisicao: {
@@ -839,8 +812,8 @@
                 'Fabiana': 56
             }
         };
-        
-        // Paleta de cores profissional
+
+        // Paleta de cores profissional (para gráficos — deixei exatamente como estava)
         const colors = {
             primary: ['#005a87', '#0084c7', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff'],
             secondary: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f', '#d3f261', '#eaff8f'],
@@ -848,7 +821,7 @@
             danger: ['#f5222d', '#ff4d4f', '#ff7875', '#ffa39e', '#ffccc7', '#ffebef'],
             purple: ['#722ed1', '#9254de', '#b37feb', '#d3adf7', '#efdbff', '#f9f0ff']
         };
-        
+
         // 1. Gráfico de Status das Requisições
         new Chart(document.getElementById('statusReqChart'), {
             type: 'doughnut',
@@ -886,7 +859,7 @@
                 }
             }
         });
-        
+
         // 2. Gráfico de Status dos Processos
         new Chart(document.getElementById('statusProcChart'), {
             type: 'pie',
@@ -913,7 +886,7 @@
                 }
             }
         });
-        
+
         // 3. Gráfico de Local
         new Chart(document.getElementById('localChart'), {
             type: 'bar',
@@ -956,7 +929,7 @@
                 }
             }
         });
-        
+
         // 4. Gráfico de Nível
         new Chart(document.getElementById('nivelChart'), {
             type: 'polarArea',
@@ -983,7 +956,7 @@
                 }
             }
         });
-        
+
         // 5. Gráfico de Vínculo (novo)
         const vinculoData = {
             'CLT': 45,
@@ -993,7 +966,7 @@
             'Temporário': 5,
             'Outros': 19
         };
-        
+
         new Chart(document.getElementById('vinculoChart'), {
             type: 'doughnut',
             data: {
@@ -1019,7 +992,7 @@
                 }
             }
         });
-        
+
         // 6. Gráfico de Diretorias
         new Chart(document.getElementById('diretoriaChart'), {
             type: 'bar',
@@ -1058,7 +1031,7 @@
                 }
             }
         });
-        
+
         // 7. Gráfico de Canais de Recrutamento
         new Chart(document.getElementById('canaisChart'), {
             type: 'radar',
@@ -1092,7 +1065,7 @@
                 }
             }
         });
-        
+
         // 8. Gráfico de Diversidade Comparativo
         new Chart(document.getElementById('diversityComparisonChart'), {
             type: 'bar',
@@ -1132,14 +1105,12 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-                            font: { size: 12 }
-                        }
+                        labels: { font: { size: 12 } }
                     }
                 }
             }
         });
-        
+
         // 9. Gráfico Time to Fill
         new Chart(document.getElementById('timeToFillChart'), {
             type: 'line',
@@ -1159,24 +1130,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: { size: 11 }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: { size: 11 }
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { font: { size: 11 } } },
+                    x: { ticks: { font: { size: 11 } } }
                 },
-                plugins: {
-                    legend: { display: false }
-                }
+                plugins: { legend: { display: false } }
             }
         });
-        
+
         // 10. Gráfico de Universidades
         new Chart(document.getElementById('universidadesChart'), {
             type: 'bar',
@@ -1206,12 +1166,10 @@
                         }
                     }
                 },
-                plugins: {
-                    legend: { display: false }
-                }
+                plugins: { legend: { display: false } }
             }
         });
-        
+
         // 11. Gráfico de Satisfação
         new Chart(document.getElementById('satisfacaoChart'), {
             type: 'doughnut',
@@ -1230,10 +1188,7 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            font: { size: 12 }
-                        }
+                        labels: { padding: 15, font: { size: 12 } }
                     },
                     tooltip: {
                         callbacks: {
